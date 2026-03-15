@@ -1,46 +1,55 @@
-# Astro Starter Kit: Basics
+# Astro 博客项目
 
-```sh
-npm create astro@latest -- --template basics
+## 项目简介
+
+这是一个基于 **Craft CMS API** 的 Astro 静态博客项目，通过调用 Craft CMS 的 API 获取文章数据，生成静态页面。
+
+## 数据来源
+
+博客内容来自 Craft CMS，需要配置以下环境变量：
+
+| 环境变量 | 说明 |
+| :--- | :--- |
+| `CRAFT_API_URL` | Craft CMS API 地址 |
+| `CRAFT_API_TOKEN` | Craft CMS 访问令牌 |
+| `CRAFT_COLLECTION_ID` | 文章集合 ID |
+
+## 目录结构
+
 ```
-
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
 /
 ├── public/
 │   └── favicon.svg
 ├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
+│   ├── assets
+│   │   └── astro.svg
+│   ├── components
+│   │   └── Welcome.astro
+│   ├── layouts
+│   │   └── Layout.astro
+│   └── pages
+│       └── index.astro
 └── package.json
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## 命令
 
-## 🧞 Commands
+所有命令需在项目根目录下运行：
 
-All commands are run from the root of the project, from a terminal:
+| 命令 | 说明 |
+| :--- | :--- |
+| `npm install` | 安装依赖 |
+| `npm run dev` | 启动本地开发服务器 (`localhost:4321`) |
+| `npm run build` | 构建生产环境站点到 `./dist/` 目录 |
+| `npm run preview` | 本地预览构建结果 |
+| `npm run deploy` | 将 `./dist/` 部署到服务器 (SSH: ta) |
+| `npm run astro ...` | 运行 Astro CLI 命令，如 `astro add` |
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## 部署说明
 
-## 👀 Want to learn more?
+部署使用 rsync 通过 SSH 同步到服务器，服务器配置如下：
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- **SSH 别名**: ta
+- **服务器路径**: /root/nginx/html/
+
+部署前需确保本地 SSH 密钥已配置到 `~/.ssh/config` 中。
