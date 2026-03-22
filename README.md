@@ -2,17 +2,31 @@
 
 ## 项目简介
 
-这是一个基于 **Craft CMS API** 的 Astro 静态博客项目，通过调用 Craft CMS 的 API 获取文章数据，生成静态页面。
+这是一个基于 **本地 Markdown 文件** 的 Astro 静态博客项目，从本地读取 markdown 文件，生成静态 HTML 页面。
 
 ## 数据来源
 
-博客内容来自 Craft CMS，需要配置以下环境变量：
+博客文章存放在 iCloud 云盘目录：
 
-| 环境变量 | 说明 |
-| :--- | :--- |
-| `CRAFT_API_URL` | Craft CMS API 地址 |
-| `CRAFT_API_TOKEN` | Craft CMS 访问令牌 |
-| `CRAFT_COLLECTION_ID` | 文章集合 ID |
+```
+/Users/acelee/Library/Mobile Documents/iCloud~com~coderforart~iOS~MWeb/Documents/blog
+```
+
+如需修改博客目录，编辑 `src/utils/posts.ts` 中的 `BLOG_DIR` 常量。
+
+### Frontmatter 格式
+
+```yaml
+---
+id: D83CF5D8-B910-4A23-80C1-18375B129F19
+title: 文章标题
+created: 2026-02-24T12:02:13Z
+modified: 2026-02-24T12:02:13Z
+tags: tag1, tag2
+---
+
+文章内容...
+```
 
 ## 目录结构
 
@@ -21,14 +35,20 @@
 ├── public/
 │   └── favicon.svg
 ├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
+│   ├── assets/
+│   │   ├── astro.svg
+│   │   └── background.svg
+│   ├── components/
 │   │   └── Welcome.astro
-│   ├── layouts
+│   ├── layouts/
 │   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
+│   ├── pages/
+│   │   ├── index.astro          # 博客首页
+│   │   └── post/
+│   │       └── [id].astro       # 文章详情页
+│   └── utils/
+│       └── posts.ts             # 文章读取工具函数
+├── astro.config.mjs
 └── package.json
 ```
 

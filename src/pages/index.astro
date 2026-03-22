@@ -1,58 +1,14 @@
 ---
-// 1. 这里是运行在服务端的代码（在构建时执行，不会暴露给浏览器）
-import fs from 'node:fs';
-import path from 'node:path';
+import { getPosts } from '../utils/posts';
 
-// 解析 markdown 文件的 frontmatter
-const parseFrontmatter = (content) => {
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return { metadata: {}, content };
-
-  const metadataStr = match[1];
-  const metadata = {};
-  metadataStr.split('\n').forEach(line => {
-    const [key, ...valueParts] = line.split(':');
-    if (key && valueParts.length) {
-      const value = valueParts.join(':').trim();
-      metadata[key.trim()] = value.replace(/^["']|["']$/g, '');
-    }
-  });
-
-  return {
-    metadata,
-    content: content.slice(match[0].length).trim()
-  };
-};
-
-const blogDir = '/Users/acelee/Library/Mobile Documents/iCloud~com~coderforart~iOS~MWeb/Documents/blog';
-
-// 读取目录下所有 .md 文件
-const files = fs.readdirSync(blogDir).filter(f => f.endsWith('.md'));
-
-// 按日期排序，最新的在前
-const posts = files.map(filename => {
-  const filePath = path.join(blogDir, filename);
-  const fileContent = fs.readFileSync(filePath, 'utf-8');
-  const { metadata, content } = parseFrontmatter(fileContent);
-
-  const id = metadata.id || filename.replace('.md', '');
-
-  return {
-    id,
-    title: metadata.title || filename.replace('.md', ''),
-    properties: {
-      date: metadata.created || metadata.modified || new Date().toISOString(),
-      tags: metadata.tags ? metadata.tags.split(',').map(t => t.trim()) : []
-    }
-  };
-}).sort((a, b) => {
-  return new Date(b.properties.date).getTime() - new Date(a.properties.date).getTime();
+const posts = getPosts().sort((a, b) => {
+  return new Date(b.created).getTime() - new Date(a.created).getTime();
 });
 ---
 
 <html lang="zh-CN">
   <head>
-    <title>我的 Craft 博客</title>
+    <title>博客</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style is:global>
@@ -124,13 +80,13 @@ const posts = files.map(filename => {
       <ul class="post-list">
         {posts.map((post) => (
           <li class="post-card">
-            <a href={`/post/${post.id}`}>
+            <a href={`/post/${post.slug}`}>
               <h2>{post.title}</h2>
               <div class="post-meta">
-                <span>{post.properties?.date ? new Date(post.properties.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}</span>
-                {post.properties?.tags && post.properties.tags.length > 0 && (
+                <span>{new Date(post.created).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                {post.tags.length > 0 && (
                   <div class="post-tags">
-                    {post.properties.tags.map((tag: string) => (
+                    {post.tags.map((tag: string) => (
                       <span class="tag">{tag}</span>
                     ))}
                   </div>

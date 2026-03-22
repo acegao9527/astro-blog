@@ -1,76 +1,17 @@
 ---
-// src/pages/post/[id].astro
-import fs from 'node:fs';
-import path from 'node:path';
+import { getPosts } from '../../utils/posts';
 import { marked } from 'marked';
 
-// 1. 告诉 Astro 需要生成哪些页面的 URL
 export async function getStaticPaths() {
-  // 解析 markdown 文件的 frontmatter
-  const parseFrontmatter = (content) => {
-    const match = content.match(/^---\n([\s\S]*?)\n---/);
-    if (!match) return { metadata: {}, content };
-
-    const metadataStr = match[1];
-    const metadata = {};
-    metadataStr.split('\n').forEach(line => {
-      const [key, ...valueParts] = line.split(':');
-      if (key && valueParts.length) {
-        const value = valueParts.join(':').trim();
-        metadata[key.trim()] = value.replace(/^["']|["']$/g, '');
-      }
-    });
-
-    return {
-      metadata,
-      content: content.slice(match[0].length).trim()
-    };
-  };
-
-  const blogDir = '/Users/acelee/Library/Mobile Documents/iCloud~com~coderforart~iOS~MWeb/Documents/blog';
-
-  // 读取目录下所有 .md 文件
-  const files = fs.readdirSync(blogDir).filter(f => f.endsWith('.md'));
-
-  const posts = files.map(filename => {
-    const filePath = path.join(blogDir, filename);
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const { metadata, content } = parseFrontmatter(fileContent);
-
-    const id = metadata.id || filename.replace('.md', '');
-
-    return {
-      id,
-      title: metadata.title || filename.replace('.md', ''),
-      properties: {
-        date: metadata.created || metadata.modified || new Date().toISOString(),
-        tags: metadata.tags ? metadata.tags.split(',').map(t => t.trim()) : []
-      },
-      content: [{ type: 'text', markdown: content }]
-    };
-  });
-
-  // 返回一个数组，Astro 会根据这个数组生成对应的静态页面
+  const posts = getPosts();
   return posts.map((post) => ({
-    params: { id: post.id },
+    params: { id: post.slug },
     props: { post },
   }));
 }
 
-// 2. 接收从 getStaticPaths 传过来的单篇文章数据
 const { post } = Astro.props;
-
-// 使用 marked 解析 markdown
-const renderContent = (content) => {
-  if (!content || !Array.isArray(content)) return '';
-
-  const textBlock = content.find(b => b.markdown);
-  if (!textBlock) return '';
-
-  const markdown = textBlock.markdown || '';
-
-  return marked.parse(markdown);
-};
+const htmlContent = marked.parse(post.body);
 ---
 
 <html lang="zh-CN">
@@ -152,17 +93,17 @@ const renderContent = (content) => {
         <header class="post-header">
           <h1>{post.title}</h1>
           <div class="post-meta">
-            <span>{post.properties?.date ? new Date(post.properties.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}</span>
-            {post.properties?.tags && post.properties.tags.length > 0 && (
+            <span>{new Date(post.created).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            {post.tags.length > 0 && (
               <div class="post-tags">
-                {post.properties.tags.map((tag: string) => (
+                {post.tags.map((tag: string) => (
                   <span class="tag">{tag}</span>
                 ))}
               </div>
             )}
           </div>
         </header>
-        <div class="content" set:html={renderContent(post.content)} />
+        <div class="content" set:html={htmlContent} />
       </article>
     </div>
   </body>
