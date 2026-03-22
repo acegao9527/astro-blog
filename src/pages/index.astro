@@ -1,22 +1,53 @@
 ---
 // 1. 这里是运行在服务端的代码（在构建时执行，不会暴露给浏览器）
+import fs from 'node:fs';
+import path from 'node:path';
 
-// 获取环境变量
-const apiUrl = import.meta.env.CRAFT_API_URL;
-const token = import.meta.env.CRAFT_API_TOKEN;
-const collectionId = import.meta.env.CRAFT_COLLECTION_ID;
+// 解析 markdown 文件的 frontmatter
+const parseFrontmatter = (content) => {
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return { metadata: {}, content };
 
-// 2. 调用 Craft API 获取数据
-const response = await fetch(`${apiUrl}/blocks?id=${collectionId}&maxDepth=-1&fetchMetadata=false`, {
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
+  const metadataStr = match[1];
+  const metadata = {};
+  metadataStr.split('\n').forEach(line => {
+    const [key, ...valueParts] = line.split(':');
+    if (key && valueParts.length) {
+      const value = valueParts.join(':').trim();
+      metadata[key.trim()] = value.replace(/^["']|["']$/g, '');
+    }
+  });
+
+  return {
+    metadata,
+    content: content.slice(match[0].length).trim()
+  };
+};
+
+const blogDir = '/Users/acelee/Library/Mobile Documents/iCloud~com~coderforart~iOS~MWeb/Documents/blog';
+
+// 读取目录下所有 .md 文件
+const files = fs.readdirSync(blogDir).filter(f => f.endsWith('.md'));
+
+// 按日期排序，最新的在前
+const posts = files.map(filename => {
+  const filePath = path.join(blogDir, filename);
+  const fileContent = fs.readFileSync(filePath, 'utf-8');
+  const { metadata, content } = parseFrontmatter(fileContent);
+
+  const id = metadata.id || filename.replace('.md', '');
+
+  return {
+    id,
+    title: metadata.title || filename.replace('.md', ''),
+    properties: {
+      date: metadata.created || metadata.modified || new Date().toISOString(),
+      tags: metadata.tags ? metadata.tags.split(',').map(t => t.trim()) : []
+    }
+  };
+}).sort((a, b) => {
+  return new Date(b.properties.date).getTime() - new Date(a.properties.date).getTime();
 });
-
-const data = await response.json();
-// 假设 API 返回的数据列表在 data.items 中
-const posts = data.items || [];
 ---
 
 <html lang="zh-CN">

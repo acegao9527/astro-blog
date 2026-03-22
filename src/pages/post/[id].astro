@@ -1,101 +1,75 @@
 ---
 // src/pages/post/[id].astro
+import fs from 'node:fs';
+import path from 'node:path';
+import { marked } from 'marked';
 
 // 1. 告诉 Astro 需要生成哪些页面的 URL
 export async function getStaticPaths() {
-  const apiUrl = import.meta.env.CRAFT_API_URL;
-  const token = import.meta.env.CRAFT_API_TOKEN;
-  const collectionId = import.meta.env.CRAFT_COLLECTION_ID;
+  // 解析 markdown 文件的 frontmatter
+  const parseFrontmatter = (content) => {
+    const match = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!match) return { metadata: {}, content };
 
-  // 获取 collection 下的所有 items
-  const response = await fetch(`${apiUrl}/blocks?id=${collectionId}&maxDepth=-1&fetchMetadata=false`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    const metadataStr = match[1];
+    const metadata = {};
+    metadataStr.split('\n').forEach(line => {
+      const [key, ...valueParts] = line.split(':');
+      if (key && valueParts.length) {
+        const value = valueParts.join(':').trim();
+        metadata[key.trim()] = value.replace(/^["']|["']$/g, '');
+      }
+    });
+
+    return {
+      metadata,
+      content: content.slice(match[0].length).trim()
+    };
+  };
+
+  const blogDir = '/Users/acelee/Library/Mobile Documents/iCloud~com~coderforart~iOS~MWeb/Documents/blog';
+
+  // 读取目录下所有 .md 文件
+  const files = fs.readdirSync(blogDir).filter(f => f.endsWith('.md'));
+
+  const posts = files.map(filename => {
+    const filePath = path.join(blogDir, filename);
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const { metadata, content } = parseFrontmatter(fileContent);
+
+    const id = metadata.id || filename.replace('.md', '');
+
+    return {
+      id,
+      title: metadata.title || filename.replace('.md', ''),
+      properties: {
+        date: metadata.created || metadata.modified || new Date().toISOString(),
+        tags: metadata.tags ? metadata.tags.split(',').map(t => t.trim()) : []
+      },
+      content: [{ type: 'text', markdown: content }]
+    };
   });
-  const data = await response.json();
-  const posts = data.items || [];
 
   // 返回一个数组，Astro 会根据这个数组生成对应的静态页面
   return posts.map((post) => ({
-    params: { id: post.id }, // 这里的 id 对应文件名 [id].astro
-    props: { post },         // 将单篇文章的数据传递给下方组件
+    params: { id: post.id },
+    props: { post },
   }));
 }
 
 // 2. 接收从 getStaticPaths 传过来的单篇文章数据
 const { post } = Astro.props;
 
-// 简单的 markdown 转 HTML 函数
-const parseMd = (text: string) => {
-  if (!text) return '';
-  // 处理粗体
-  let html = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // 处理斜体
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  // 处理链接
-  html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>');
-  return html;
-};
-
-// 渲染内容块
+// 使用 marked 解析 markdown
 const renderContent = (content) => {
   if (!content || !Array.isArray(content)) return '';
 
-  let html = '';
-  let inList = false;
-  let listItems: string[] = [];
+  const textBlock = content.find(b => b.markdown);
+  if (!textBlock) return '';
 
-  content.forEach((block) => {
-    if (block.type === 'image' && block.url) {
-      if (inList) {
-        html += `<ul>${listItems.join('')}</ul>`;
-        inList = false;
-        listItems = [];
-      }
-      html += `<img src="${block.url}" alt="" />`;
-      return;
-    }
+  const markdown = textBlock.markdown || '';
 
-    const text = block.markdown || '';
-    const textStyle = block.textStyle;
-    const decorations = block.decorations;
-    const listStyle = block.listStyle;
-
-    // 处理列表
-    if (listStyle === 'bullet') {
-      inList = true;
-      const itemText = text.replace(/^-\s*/, '');
-      listItems.push(`<li>${parseMd(itemText)}</li>`);
-      return;
-    } else if (inList) {
-      html += `<ul>${listItems.join('')}</ul>`;
-      inList = false;
-      listItems = [];
-    }
-
-    // 处理引用
-    if (decorations && decorations.includes('quote')) {
-      const quoteText = text.replace(/^>\s*/, '');
-      html += `<blockquote>${parseMd(quoteText)}</blockquote>`;
-      return;
-    }
-
-    // 处理标题
-    if (textStyle === 'h2') {
-      const titleText = text.replace(/^##\s*/, '');
-      html += `<h2>${parseMd(titleText)}</h2>`;
-    } else if (textStyle === 'h3') {
-      const titleText = text.replace(/^###\s*/, '');
-      html += `<h3>${parseMd(titleText)}</h3>`;
-    } else if (text) {
-      html += `<div>${parseMd(text)}</div>`;
-    }
-  });
-
-  if (inList) {
-    html += `<ul>${listItems.join('')}</ul>`;
-  }
-
-  return html;
+  return marked.parse(markdown);
 };
 ---
 
@@ -162,6 +136,13 @@ const renderContent = (content) => {
       }
       .content ul { padding-left: 1.5rem; margin: 1rem 0; }
       .content li { margin-bottom: 0.5rem; color: #444; }
+      .content table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+      .content th, .content td { border: 1px solid #e0e0e0; padding: 0.75rem 1rem; text-align: left; }
+      .content th { background: #f5f5f5; font-weight: 600; color: #111; }
+      .content tr:nth-child(even) td { background: #fafafa; }
+      .content pre { background: #f5f5f5; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; }
+      .content code { font-family: 'SF Mono', Monaco, 'Courier New', monospace; font-size: 0.9rem; }
+      .content :not(pre) > code { background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 4px; color: #e83e8c; }
     </style>
   </head>
   <body>
