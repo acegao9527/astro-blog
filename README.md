@@ -28,6 +28,19 @@ tags: tag1, tag2
 文章内容...
 ```
 
+## 命令
+
+所有命令需在项目根目录下运行：
+
+| 命令 | 说明 |
+| :--- | :--- |
+| `npm install` | 安装依赖 |
+| `npm run dev` | 启动本地开发服务器 (`localhost:4321`) |
+| `npm run build` | 构建生产环境站点到 `./dist/` 目录 |
+| `npm run preview` | 本地预览构建结果 |
+| `npm run deploy` | 将 `./dist/` 部署到服务器 (SSH: ta) |
+| `npm run astro ...` | 运行 Astro CLI 命令，如 `astro add` |
+
 ## 目录结构
 
 ```
@@ -51,19 +64,6 @@ tags: tag1, tag2
 ├── astro.config.mjs
 └── package.json
 ```
-
-## 命令
-
-所有命令需在项目根目录下运行：
-
-| 命令 | 说明 |
-| :--- | :--- |
-| `npm install` | 安装依赖 |
-| `npm run dev` | 启动本地开发服务器 (`localhost:4321`) |
-| `npm run build` | 构建生产环境站点到 `./dist/` 目录 |
-| `npm run preview` | 本地预览构建结果 |
-| `npm run deploy` | 将 `./dist/` 部署到服务器 (SSH: ta) |
-| `npm run astro ...` | 运行 Astro CLI 命令，如 `astro add` |
 
 ## 部署说明
 

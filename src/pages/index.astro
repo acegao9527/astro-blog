@@ -1,101 +1,143 @@
 ---
-import { getPosts } from '../utils/posts';
+import { getPosts } from "../utils/posts";
 
 const posts = getPosts().sort((a, b) => {
-  return new Date(b.created).getTime() - new Date(a.created).getTime();
+    return new Date(b.created).getTime() - new Date(a.created).getTime();
 });
 ---
 
 <html lang="zh-CN">
-  <head>
-    <title>博客</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style is:global>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        background: #fafafa;
-        color: #333;
-        line-height: 1.6;
-      }
-      .container { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem; }
-      header { margin-bottom: 2rem; }
-      h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        color: #111;
-      }
-      .subtitle {
-        margin-top: 0.5rem;
-        color: #666;
-        font-size: 1.1rem;
-      }
-      .post-list { list-style: none; }
-      .post-card {
-        background: #fff;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        transition: all 0.2s ease;
-        border: 1px solid #eee;
-      }
-      .post-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-        border-color: transparent;
-      }
-      .post-card a { text-decoration: none; color: inherit; }
-      .post-card h2 {
-        font-size: 1.35rem;
-        font-weight: 600;
-        color: #111;
-        margin-bottom: 0.5rem;
-      }
-      .post-meta {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-size: 0.875rem;
-        color: #888;
-      }
-      .post-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-      .tag {
-        background: #f0f0f0;
-        color: #555;
-        padding: 0.2rem 0.6rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <h1>博客</h1>
-        <p class="subtitle">思考、设计与创造</p>
-      </header>
+    <head>
+        <title>博客</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style is:global>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    "Helvetica Neue", Arial, sans-serif;
+                background: #fafafa;
+                color: #333;
+                line-height: 1.6;
+            }
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 2rem 1.5rem;
+            }
+            header {
+                margin-bottom: 2rem;
+            }
+            h1 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                letter-spacing: -0.02em;
+                color: #111;
+            }
+            .subtitle {
+                margin-top: 0.5rem;
+                color: #666;
+                font-size: 1.1rem;
+            }
+            .post-list {
+                list-style: none;
+            }
+            .post-card {
+                background: #fff;
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+                transition: all 0.2s ease;
+                border: 1px solid #eee;
+            }
+            .post-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+                border-color: transparent;
+            }
+            .post-card a {
+                text-decoration: none;
+                color: inherit;
+            }
+            .post-card h2 {
+                font-size: 1.35rem;
+                font-weight: 600;
+                color: #111;
+                margin-bottom: 0.5rem;
+            }
+            .post-meta {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                font-size: 0.875rem;
+                color: #888;
+            }
+            .post-tags {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            }
+            .tag {
+                background: #f0f0f0;
+                color: #555;
+                padding: 0.2rem 0.6rem;
+                border-radius: 4px;
+                font-size: 0.75rem;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>博客</h1>
+                <p class="subtitle">思考、设计与创造</p>
+            </header>
 
-      <ul class="post-list">
-        {posts.map((post) => (
-          <li class="post-card">
-            <a href={`/post/${post.slug}`}>
-              <h2>{post.title}</h2>
-              <div class="post-meta">
-                <span>{new Date(post.created).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                {post.tags.length > 0 && (
-                  <div class="post-tags">
-                    {post.tags.map((tag: string) => (
-                      <span class="tag">{tag}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </body>
+            <ul class="post-list">
+                {
+                    posts.map((post) => (
+                        <li class="post-card">
+                            <a href={`/post/${post.slug}`}>
+                                <h2>{post.title}</h2>
+                                <div class="post-meta">
+                                    <span>
+                                        {new Date(
+                                            post.created,
+                                        ).toLocaleDateString("zh-CN", {
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                        })}
+                                    </span>
+                                    {post.tags.length > 0 && (
+                                        <div class="post-tags">
+                                            {post.tags.map((tag: string) => (
+                                                <span class="tag">{tag}</span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </a>
+                        </li>
+                    ))
+                }
+            </ul>
+        </div>
+
+        <footer
+            style="text-align: center; padding: 2rem; color: #888; font-size: 0.875rem;"
+        >
+            <a
+                href="https://beian.miit.gov.cn/"
+                target="_blank"
+                style="color: #888; text-decoration: none;"
+                >沪ICP备2023033276号</a
+            >
+        </footer>
+    </body>
 </html>
