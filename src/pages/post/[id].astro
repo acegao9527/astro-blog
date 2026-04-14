@@ -164,6 +164,54 @@ const htmlContent = marked.parse(post.body);
                 border-radius: 4px;
                 color: #e83e8c;
             }
+
+            @media (max-width: 768px) {
+                .container {
+                    padding: 1rem;
+                }
+                article {
+                    padding: 1.5rem;
+                }
+                h1 {
+                    font-size: 1.75rem;
+                }
+                .post-header {
+                    margin-bottom: 1.5rem;
+                    padding-bottom: 1rem;
+                }
+                .content {
+                    font-size: 1rem;
+                }
+                .content h2 {
+                    font-size: 1.3rem;
+                    margin: 2rem 0 0.75rem;
+                }
+                .content h3 {
+                    font-size: 1.1rem;
+                    margin: 1.5rem 0 0.5rem;
+                }
+                .content p {
+                    margin-bottom: 1rem;
+                }
+                .content img {
+                    margin: 1rem 0;
+                }
+                .content blockquote {
+                    padding-left: 1rem;
+                    margin: 1rem 0;
+                    font-size: 1rem;
+                }
+                .content table {
+                    font-size: 0.85rem;
+                }
+                .content th,
+                .content td {
+                    padding: 0.5rem 0.75rem;
+                }
+                .content pre {
+                    padding: 0.75rem;
+                }
+            }
         </style>
     </head>
     <body>

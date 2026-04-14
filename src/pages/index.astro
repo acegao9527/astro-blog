@@ -89,6 +89,29 @@ const posts = getPosts().sort((a, b) => {
                 border-radius: 4px;
                 font-size: 0.75rem;
             }
+
+            @media (max-width: 768px) {
+                .container {
+                    padding: 1rem;
+                }
+                h1 {
+                    font-size: 1.75rem;
+                }
+                .subtitle {
+                    font-size: 1rem;
+                }
+                .post-card {
+                    padding: 1rem;
+                }
+                .post-card h2 {
+                    font-size: 1.15rem;
+                }
+                .post-meta {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.5rem;
+                }
+            }
         </style>
     </head>
     <body>
