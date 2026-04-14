@@ -10,7 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "deploy": "rsync -avz --delete -e ssh dist/ ta:/root/nginx/html/"
+    "deploy": "rsync -avz --delete -e ssh dist/ ta:/root/nginx-blog/html/"
   },
   "dependencies": {
     "astro": "^6.0.4",
