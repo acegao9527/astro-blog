@@ -1,0 +1,51 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { formatDate, getAllPosts, getPostUrl } from "../../lib/blog";
+
+export async function getStaticPaths() {
+  const posts = await getAllPosts();
+  const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
+
+  return tags.map((tag) => ({
+    params: { tag: encodeURIComponent(tag) },
+    props: {
+      tag,
+      posts: posts.filter((post) => post.data.tags.includes(tag)),
+    },
+  }));
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<Layout
+  title={`标签：${tag}`}
+  description={`查看标签“${tag}”下的全部文章。`}
+>
+  <section class="container page-section">
+    <header class="page-header">
+      <a class="back-link" href="/tags/">← 返回标签页</a>
+      <h1>#{tag}</h1>
+      <p>共 {posts.length} 篇文章。</p>
+    </header>
+
+    <ul class="taxonomy-list">
+      {posts.map((post) => (
+        <li class="taxonomy-card">
+          <a class="taxonomy-card__link" href={getPostUrl(post)}>
+            <div class="taxonomy-card__meta">{formatDate(post.data.created)}</div>
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+            <div class="tag-list">
+              {post.data.tags.map((item) => (
+                <span class="tag">
+                  #{item}
+                </span>
+              ))}
+            </div>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+</Layout>

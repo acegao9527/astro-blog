@@ -1,0 +1,39 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { formatDate, getAllPosts, groupPostsByYear, getPostUrl } from "../../lib/blog";
+
+const posts = await getAllPosts();
+const groupedPosts = Object.entries(groupPostsByYear(posts));
+---
+
+<Layout
+  title="文章归档"
+  description="按年份查看博客文章归档。"
+>
+  <section class="container page-section">
+    <header class="page-header">
+      <div class="eyebrow">Archive</div>
+      <h1>文章归档</h1>
+      <p>共 {posts.length} 篇文章，按年份归类，方便回看长期积累。</p>
+    </header>
+
+    <div class="archive-list">
+      {groupedPosts.map(([year, yearPosts]) => (
+        <section class="archive-year">
+          <h2>{year}</h2>
+          <p class="archive-year__count">{yearPosts.length} 篇</p>
+          <div class="archive-posts">
+            {yearPosts.map((post) => (
+              <article class="archive-post">
+                <a href={getPostUrl(post)}>{post.data.title}</a>
+                <time class="archive-post__meta" datetime={post.data.created.toISOString()}>
+                  {formatDate(post.data.created)}
+                </time>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  </section>
+</Layout>

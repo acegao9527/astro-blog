@@ -1,0 +1,82 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { render } from "astro:content";
+import {
+  formatDate,
+  getAllPosts,
+  getPostUrl,
+  getTagHref,
+} from "../../lib/blog";
+
+export async function getStaticPaths() {
+  const posts = await getAllPosts();
+  return posts.map((post) => ({
+    params: { slug: post.data.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const allPosts = await getAllPosts();
+const currentIndex = allPosts.findIndex(({ id }) => id === post.id);
+const previousPost = currentIndex >= 0 ? allPosts[currentIndex + 1] : undefined;
+const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : undefined;
+---
+
+<Layout
+  title={post.data.title}
+  description={post.data.description}
+  pageType="article"
+  publishedTime={post.data.created}
+  modifiedTime={post.data.modified}
+  tags={post.data.tags}
+>
+  <section class="article container">
+    <a class="back-link" href="/">← 返回首页</a>
+    <article class="article-shell">
+      <header class="article-header">
+        <div class="eyebrow">Article</div>
+        <h1>{post.data.title}</h1>
+        <div class="article-header__meta">
+          <time datetime={post.data.created.toISOString()}>{formatDate(post.data.created)}</time>
+          {post.data.modified.getTime() !== post.data.created.getTime() && (
+            <span>更新于 {formatDate(post.data.modified)}</span>
+          )}
+          {headings.length > 0 && <span>{headings.length} 个章节</span>}
+        </div>
+        {post.data.tags.length > 0 && (
+          <div class="post-meta-tags" aria-label="文章标签">
+            {post.data.tags.map((tag) => (
+              <a class="tag" href={getTagHref(tag)}>
+                #{tag}
+              </a>
+            ))}
+          </div>
+        )}
+      </header>
+      <div class="article-content">
+        <Content />
+      </div>
+    </article>
+
+    <nav class="post-nav" aria-label="文章翻页">
+      {previousPost ? (
+        <a class="post-nav__link" href={getPostUrl(previousPost)}>
+          <span class="post-nav__label">上一篇</span>
+          <strong>{previousPost.data.title}</strong>
+        </a>
+      ) : (
+        <div />
+      )}
+      {nextPost ? (
+        <a class="post-nav__link" href={getPostUrl(nextPost)}>
+          <span class="post-nav__label">下一篇</span>
+          <strong>{nextPost.data.title}</strong>
+        </a>
+      ) : (
+        <div />
+      )}
+    </nav>
+  </section>
+</Layout>
