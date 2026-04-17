@@ -8,7 +8,7 @@ const ROOT_DIR = path.resolve(__dirname, "..");
 const DEFAULT_BLOG_DIR =
   "/Users/acelee/Library/Mobile Documents/iCloud~md~obsidian/Documents/ClawDoc/blog";
 const BLOG_DIR = process.env.BLOG_DIR || DEFAULT_BLOG_DIR;
-const OUTPUT_DIR = path.join(ROOT_DIR, "src", "content", "posts");
+const OUTPUT_DIR = path.join(ROOT_DIR, "content", "posts");
 const OUTPUT_ASSET_DIR = path.join(ROOT_DIR, "public", "uploads", "posts");
 const FRONTMATTER_ASSET_FIELDS = ["cover", "hero", "image", "ogImage"];
 

@@ -1,6 +1,6 @@
 # Astro 博客项目
 
-这是一个基于 Astro 6 的静态个人博客。文章依然来自本地 Markdown，但在构建前会先同步到 `src/content/posts`，文章素材会同步到 `public/uploads/posts`，再由 Astro content collections 统一校验、渲染和生成页面。
+这是一个基于 Astro 6 的静态个人博客。文章依然来自本地 Markdown，但在构建前会先同步到根目录的 `content/posts`，文章素材会同步到 `public/uploads/posts`，再由 Astro content collections 统一校验、渲染和生成页面。
 
 ## 已完成的优化
 
@@ -78,7 +78,7 @@ cover: ./cover.webp
 - `tags` 可以是 `tag1, tag2` 或 YAML 数组
 - `description` 留空时会从正文自动截取摘要
 - `cover` 等相对素材路径会在同步时改写为站点路径
-- 同步脚本会把源 Markdown 规范化写入 `src/content/posts`
+- 同步脚本会把源 Markdown 规范化写入 `content/posts`
 - 正文中的相对素材链接会同步到 `public/uploads/posts/<slug>/`
 
 ## 命令
@@ -86,7 +86,7 @@ cover: ./cover.webp
 | 命令 | 说明 |
 | :--- | :--- |
 | `npm install` | 安装依赖 |
-| `npm run sync:posts` | 手动同步本地 Markdown 到 `src/content/posts` |
+| `npm run sync:posts` | 手动同步本地 Markdown 到 `content/posts` |
 | `npm run dev` | 先同步文章，再启动本地开发服务器 |
 | `npm run build` | 先同步文章，再构建生产站点到 `./dist/` |
 | `npm run preview` | 本地预览构建结果 |
@@ -103,11 +103,11 @@ cover: ./cover.webp
 │   ├── uploads/
 │   │   └── posts/            # 同步生成的文章素材
 │   └── robots.txt
+├── content/
+│   └── posts/                # 同步生成的中间 Markdown 内容
 ├── scripts/
 │   └── sync-posts.mjs
 ├── src/
-│   ├── content/
-│   │   └── posts/             # 同步生成的标准 Markdown 内容
 │   ├── layouts/
 │   │   └── Layout.astro
 │   ├── lib/
