@@ -12,7 +12,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
-    "deploy": "rsync -avz --delete -e ssh dist/ ta:/root/nginx-blog/html/"
+    "deploy": "rsync -avz --delete --chmod=F644,D755 -e ssh dist/ ta:/root/nginx-blog/html/"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",

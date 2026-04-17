@@ -11,14 +11,22 @@ const BLOG_DIR = process.env.BLOG_DIR || DEFAULT_BLOG_DIR;
 const OUTPUT_DIR = path.join(ROOT_DIR, "content", "posts");
 const OUTPUT_ASSET_DIR = path.join(ROOT_DIR, "public", "uploads", "posts");
 const FRONTMATTER_ASSET_FIELDS = ["cover", "hero", "image", "ogImage"];
+const FILE_MODE = 0o644;
+const DIRECTORY_MODE = 0o755;
 
 function ensureDirectory(dir) {
-  fs.mkdirSync(dir, { recursive: true });
+  fs.mkdirSync(dir, { recursive: true, mode: DIRECTORY_MODE });
+  fs.chmodSync(dir, DIRECTORY_MODE);
 }
 
 function resetOutputDir(dir) {
   fs.rmSync(dir, { recursive: true, force: true });
-  fs.mkdirSync(dir, { recursive: true });
+  fs.mkdirSync(dir, { recursive: true, mode: DIRECTORY_MODE });
+  fs.chmodSync(dir, DIRECTORY_MODE);
+}
+
+function ensureFileMode(filePath) {
+  fs.chmodSync(filePath, FILE_MODE);
 }
 
 function normalizeTags(tags) {
@@ -155,6 +163,18 @@ function toPublicAssetPath(slug, relativePath) {
   return `/uploads/posts/${slug}/${safePath}${suffix}`;
 }
 
+function toPostAssetPath(slug, relativePath) {
+  return `../../${toPublicAssetPath(slug, relativePath).replace(/^\//, "")}`;
+}
+
+function escapeHtmlAttribute(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function rewriteFrontmatterAssetFields(data, slug) {
   const next = { ...data };
 
@@ -198,7 +218,13 @@ function rewriteMarkdownAssetPaths(content, slug) {
         return match;
       }
 
-      return `${start}${toPublicAssetPath(slug, pathPart)}${suffix}${end}`;
+      if (start.startsWith("![")) {
+        const altMatch = start.match(/^!\[([^\]]*)\]\($/);
+        const alt = altMatch ? altMatch[1] : "";
+        return `<img src="${toPostAssetPath(slug, pathPart)}" alt="${escapeHtmlAttribute(alt)}" />`;
+      }
+
+      return `${start}${toPostAssetPath(slug, pathPart)}${suffix}${end}`;
     },
   );
 }
@@ -270,6 +296,7 @@ function copyPostAssets(sourceDir, slug, entryPath) {
       const destinationPath = path.join(targetDir, relativePath);
       ensureDirectory(path.dirname(destinationPath));
       fs.copyFileSync(absolutePath, destinationPath);
+      ensureFileMode(destinationPath);
       copied += 1;
     }
   }
@@ -352,7 +379,9 @@ for (const post of posts) {
     rewriteMarkdownAssetPaths(content.trim(), slug),
   );
   const output = `${frontmatterToString(normalized)}${rewrittenContent}\n`;
-  fs.writeFileSync(path.join(OUTPUT_DIR, `${slug}.md`), output, "utf-8");
+  const outputPath = path.join(OUTPUT_DIR, `${slug}.md`);
+  fs.writeFileSync(outputPath, output, "utf-8");
+  ensureFileMode(outputPath);
   assetCount += copyPostAssets(post.sourceDir, slug, post.entryPath);
   count += 1;
 }

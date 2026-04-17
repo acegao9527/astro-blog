@@ -437,6 +437,7 @@ img {
 .article-content h4 {
   line-height: 1.25;
   margin: 2.2rem 0 0.9rem;
+  scroll-margin-block: 7rem;
 }
 
 .article-content p,
