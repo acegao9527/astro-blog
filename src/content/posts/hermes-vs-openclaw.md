@@ -1,9 +1,10 @@
 ---
-title: "Hermes vs OpenClaw: 深度技术解析"
+title: "Hermes vs OpenClaw  深度技术解析"
 slug: "hermes-vs-openclaw"
 created: "2026-04-13T20:53:41Z"
 modified: "2026-04-13T21:37:19Z"
 description: "核心摘要 (Executive Summary) 当前社区中关于 Hermes Agent 将“取代” OpenClaw 的论调，本质上是一种由于生态叙事和发声群体错位导致的误读。这两者并非同一赛道的产品： - OpenClaw 代表了面向生产环境的应用级 Agent 框架（Ag"
+id: "611451a9-5788-4a07-ba1d-e3684d861363"
 tags: []
 ---
 ## 核心摘要 (Executive Summary)

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DEFAULT_BLOG_DIR =
-  "/Users/acelee/Library/Mobile Documents/iCloud~com~coderforart~iOS~MWeb/Documents/blog";
+  "/Users/acelee/Library/Mobile Documents/iCloud~md~obsidian/Documents/ClawDoc/blog";
 const BLOG_DIR = process.env.BLOG_DIR || DEFAULT_BLOG_DIR;
 const OUTPUT_DIR = path.join(ROOT_DIR, "src", "content", "posts");
 
@@ -102,7 +102,9 @@ function frontmatterToString(data) {
     lines.push(`id: ${escapeYamlString(data.id)}`);
   }
 
-  lines.push(`tags: [${data.tags.map((tag) => escapeYamlString(tag)).join(", ")}]`);
+  lines.push(
+    `tags: [${data.tags.map((tag) => escapeYamlString(tag)).join(", ")}]`,
+  );
   lines.push("---", "");
   return lines.join("\n");
 }
@@ -129,7 +131,9 @@ for (const file of files) {
 
   const basename = path.basename(file, path.extname(file));
   const slug = String(data.slug || basename).trim();
-  const created = String(data.created || data.modified || new Date().toISOString());
+  const created = String(
+    data.created || data.modified || new Date().toISOString(),
+  );
   const modified = String(data.modified || data.created || created);
   const title = String(data.title || basename).trim();
   const description = String(data.description || makeExcerpt(content)).trim();
