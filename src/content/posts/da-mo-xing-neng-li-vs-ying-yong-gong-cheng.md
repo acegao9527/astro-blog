@@ -1,10 +1,10 @@
 ---
+id: "F43F5C03-C3A6-41F6-8FDD-25EE5A3700C0"
 title: "大模型能力vs应用工程"
 slug: "da-mo-xing-neng-li-vs-ying-yong-gong-cheng"
-created: "2026-02-27T08:15:41Z"
-modified: "2026-02-27T08:15:41Z"
+created: "2026-02-27T08:15:41.000Z"
+modified: "2026-02-27T08:15:41.000Z"
 description: "大模型能力发展会碾压应用工程吗？ 创建日期：2026-02-27 主题：AI 应用工程的价值与未来 --- 核心问题 大模型能力的发展会碾压一切大模型应用工程吗？ --- 一、观点背景 这一观点并不少见。随着大模型上下文越来越长、RAG 还有用吗？随着 Claude Code 为"
-id: "F43F5C03-C3A6-41F6-8FDD-25EE5A3700C0"
 tags: []
 ---
 # 大模型能力发展会碾压应用工程吗？

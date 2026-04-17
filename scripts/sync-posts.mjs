@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import matter from "gray-matter";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
@@ -8,24 +9,23 @@ const DEFAULT_BLOG_DIR =
   "/Users/acelee/Library/Mobile Documents/iCloud~md~obsidian/Documents/ClawDoc/blog";
 const BLOG_DIR = process.env.BLOG_DIR || DEFAULT_BLOG_DIR;
 const OUTPUT_DIR = path.join(ROOT_DIR, "src", "content", "posts");
+const OUTPUT_ASSET_DIR = path.join(ROOT_DIR, "public", "uploads", "posts");
+const FRONTMATTER_ASSET_FIELDS = ["cover", "hero", "image", "ogImage"];
 
 function ensureDirectory(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
-function cleanOutputDir(dir) {
-  if (!fs.existsSync(dir)) return;
-  for (const entry of fs.readdirSync(dir)) {
-    if (entry.endsWith(".md") || entry.endsWith(".mdx")) {
-      fs.unlinkSync(path.join(dir, entry));
-    }
-  }
+function resetOutputDir(dir) {
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(dir, { recursive: true });
 }
 
 function normalizeTags(tags) {
   if (Array.isArray(tags)) {
     return tags.map((tag) => String(tag).trim()).filter(Boolean);
   }
+
   if (typeof tags === "string") {
     return tags
       .trim()
@@ -35,34 +35,8 @@ function normalizeTags(tags) {
       .map((tag) => tag.replace(/^['"]|['"]$/g, ""))
       .filter(Boolean);
   }
+
   return [];
-}
-
-function parseFrontmatter(raw) {
-  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
-  if (!match) {
-    return { data: {}, content: raw };
-  }
-
-  const frontmatter = match[1];
-  const data = {};
-
-  for (const line of frontmatter.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-
-    const separatorIndex = trimmed.indexOf(":");
-    if (separatorIndex === -1) continue;
-
-    const key = trimmed.slice(0, separatorIndex).trim();
-    const value = trimmed.slice(separatorIndex + 1).trim();
-    data[key] = value.replace(/^['"]|['"]$/g, "");
-  }
-
-  return {
-    data,
-    content: raw.slice(match[0].length),
-  };
 }
 
 function stripMarkdown(markdown) {
@@ -84,29 +58,227 @@ function makeExcerpt(body) {
   return plain.slice(0, 140).trim();
 }
 
-function escapeYamlString(value) {
+function stringifyFrontmatterValue(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return JSON.stringify(value.toISOString());
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stringifyFrontmatterValue(item)).join(", ")}]`;
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    Object.getPrototypeOf(value) === Object.prototype
+  ) {
+    return JSON.stringify(value);
+  }
+
   return JSON.stringify(value ?? "");
 }
 
 function frontmatterToString(data) {
-  const lines = [
-    "---",
-    `title: ${escapeYamlString(data.title)}`,
-    `slug: ${escapeYamlString(data.slug)}`,
-    `created: ${escapeYamlString(data.created)}`,
-    `modified: ${escapeYamlString(data.modified)}`,
-    `description: ${escapeYamlString(data.description)}`,
+  const lines = ["---"];
+  const orderedKeys = [
+    "id",
+    "title",
+    "slug",
+    "created",
+    "modified",
+    "description",
+    "cover",
+    "tags",
   ];
 
-  if (data.id) {
-    lines.push(`id: ${escapeYamlString(data.id)}`);
+  for (const key of orderedKeys) {
+    if (data[key] === undefined) continue;
+    lines.push(`${key}: ${stringifyFrontmatterValue(data[key])}`);
   }
 
-  lines.push(
-    `tags: [${data.tags.map((tag) => escapeYamlString(tag)).join(", ")}]`,
-  );
+  for (const [key, value] of Object.entries(data)) {
+    if (orderedKeys.includes(key) || value === undefined) continue;
+    lines.push(`${key}: ${stringifyFrontmatterValue(value)}`);
+  }
+
   lines.push("---", "");
   return lines.join("\n");
+}
+
+function normalizeDateValue(value, fallback) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString();
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+
+  return fallback;
+}
+
+function isRelativeAssetPath(value) {
+  if (typeof value !== "string") return false;
+
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+
+  if (
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("#") ||
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("//") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("mailto:") ||
+    trimmed.startsWith("tel:")
+  ) {
+    return false;
+  }
+
+  const normalized = trimmed.replace(/^<|>$/g, "");
+  const extension = path.extname(normalized.split(/[?#]/, 1)[0]).toLowerCase();
+  return extension !== ".md" && extension !== ".mdx";
+}
+
+function toPublicAssetPath(slug, relativePath) {
+  const normalized = relativePath.replace(/^<|>$/g, "");
+  const suffixIndex = normalized.search(/[?#]/);
+  const pathname =
+    suffixIndex === -1 ? normalized : normalized.slice(0, suffixIndex);
+  const suffix = suffixIndex === -1 ? "" : normalized.slice(suffixIndex);
+  const safePath = pathname
+    .split(/[\\/]/)
+    .filter((segment) => segment && segment !== "." && segment !== "..")
+    .join("/");
+
+  return `/uploads/posts/${slug}/${safePath}${suffix}`;
+}
+
+function rewriteFrontmatterAssetFields(data, slug) {
+  const next = { ...data };
+
+  for (const field of FRONTMATTER_ASSET_FIELDS) {
+    if (isRelativeAssetPath(next[field])) {
+      next[field] = toPublicAssetPath(slug, next[field]);
+    }
+  }
+
+  return next;
+}
+
+function omitUndefinedEntries(data) {
+  return Object.fromEntries(
+    Object.entries(data).filter(([, value]) => value !== undefined),
+  );
+}
+
+function rewriteMarkdownAssetPaths(content, slug) {
+  return content.replace(
+    /(!?\[[^\]]*]\()([^)\n]+)(\))/g,
+    (match, start, destination, end) => {
+      const trimmed = destination.trim();
+      let pathPart = trimmed;
+      let suffix = "";
+
+      if (trimmed.startsWith("<")) {
+        const closingIndex = trimmed.indexOf(">");
+        if (closingIndex === -1) return match;
+        pathPart = trimmed.slice(1, closingIndex);
+        suffix = trimmed.slice(closingIndex + 1);
+      } else {
+        const whitespaceIndex = trimmed.search(/\s/);
+        if (whitespaceIndex !== -1) {
+          pathPart = trimmed.slice(0, whitespaceIndex);
+          suffix = trimmed.slice(whitespaceIndex);
+        }
+      }
+
+      if (!isRelativeAssetPath(pathPart)) {
+        return match;
+      }
+
+      return `${start}${toPublicAssetPath(slug, pathPart)}${suffix}${end}`;
+    },
+  );
+}
+
+function normalizeCodeFenceLanguages(content) {
+  return content.replace(/^```other(\s*)$/gm, "```bash$1");
+}
+
+function listPostEntries(rootDir) {
+  const entries = fs.readdirSync(rootDir, { withFileTypes: true });
+  const posts = [];
+
+  for (const entry of entries) {
+    if (entry.name.startsWith(".")) continue;
+    if (!entry.isDirectory()) continue;
+
+    const postDir = path.join(rootDir, entry.name);
+    const candidateNames = ["post.md", "index.md", "post.mdx", "index.mdx"];
+    const entryFilename = candidateNames.find((name) =>
+      fs.existsSync(path.join(postDir, name)),
+    );
+    if (!entryFilename) continue;
+
+    posts.push({
+      entryPath: path.join(postDir, entryFilename),
+      sourceDir: postDir,
+      fallbackSlug: entry.name,
+      sortKey: entry.name,
+    });
+  }
+
+  for (const entry of entries) {
+    if (entry.name.startsWith(".")) continue;
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+
+    const filePath = path.join(rootDir, entry.name);
+    const basename = path.basename(entry.name, path.extname(entry.name));
+
+    posts.push({
+      entryPath: filePath,
+      sourceDir: rootDir,
+      fallbackSlug: basename,
+      sortKey: basename,
+    });
+  }
+
+  return posts.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "zh-CN"));
+}
+
+function copyPostAssets(sourceDir, slug, entryPath) {
+  const targetDir = path.join(OUTPUT_ASSET_DIR, slug);
+  let copied = 0;
+
+  function walk(currentDir) {
+    for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+      if (entry.name.startsWith(".")) continue;
+      const absolutePath = path.join(currentDir, entry.name);
+
+      if (entry.isDirectory()) {
+        walk(absolutePath);
+        continue;
+      }
+
+      if (!entry.isFile()) continue;
+      if (absolutePath === entryPath) continue;
+      if (entry.name.endsWith(".md") || entry.name.endsWith(".mdx")) continue;
+
+      const relativePath = path.relative(sourceDir, absolutePath);
+      const destinationPath = path.join(targetDir, relativePath);
+      ensureDirectory(path.dirname(destinationPath));
+      fs.copyFileSync(absolutePath, destinationPath);
+      copied += 1;
+    }
+  }
+
+  if (fs.existsSync(sourceDir)) {
+    walk(sourceDir);
+  }
+
+  return copied;
 }
 
 if (!fs.existsSync(BLOG_DIR)) {
@@ -115,43 +287,76 @@ if (!fs.existsSync(BLOG_DIR)) {
 }
 
 ensureDirectory(OUTPUT_DIR);
-cleanOutputDir(OUTPUT_DIR);
+ensureDirectory(OUTPUT_ASSET_DIR);
+resetOutputDir(OUTPUT_DIR);
+resetOutputDir(OUTPUT_ASSET_DIR);
 
-const files = fs
-  .readdirSync(BLOG_DIR)
-  .filter((file) => file.endsWith(".md"))
-  .sort((a, b) => a.localeCompare(b, "zh-CN"));
+const posts = listPostEntries(BLOG_DIR);
+const seenSlugs = new Set();
 
 let count = 0;
+let assetCount = 0;
 
-for (const file of files) {
-  const filePath = path.join(BLOG_DIR, file);
-  const raw = fs.readFileSync(filePath, "utf-8");
-  const { data, content } = parseFrontmatter(raw);
+for (const post of posts) {
+  const raw = fs.readFileSync(post.entryPath, "utf-8");
+  const { data, content } = matter(raw);
 
-  const basename = path.basename(file, path.extname(file));
-  const slug = String(data.slug || basename).trim();
-  const created = String(
-    data.created || data.modified || new Date().toISOString(),
+  const slug = String(data.slug || post.fallbackSlug).trim();
+  if (!slug) {
+    console.error(`[sync-posts] Missing slug for ${post.entryPath}`);
+    process.exit(1);
+  }
+
+  if (seenSlugs.has(slug)) {
+    console.error(`[sync-posts] Duplicate slug detected: ${slug}`);
+    process.exit(1);
+  }
+  seenSlugs.add(slug);
+
+  const fallbackCreated = new Date().toISOString();
+  const created = normalizeDateValue(
+    data.created ?? data.modified,
+    fallbackCreated,
   );
-  const modified = String(data.modified || data.created || created);
-  const title = String(data.title || basename).trim();
+  const modified = normalizeDateValue(data.modified ?? data.created, created);
+  const title = String(data.title || post.fallbackSlug).trim();
   const description = String(data.description || makeExcerpt(content)).trim();
   const tags = normalizeTags(data.tags);
 
-  const normalized = {
-    id: data.id ? String(data.id).trim() : undefined,
-    title,
-    slug,
-    created,
-    modified,
-    description,
-    tags,
-  };
+  const extras = { ...data };
+  delete extras.id;
+  delete extras.title;
+  delete extras.slug;
+  delete extras.created;
+  delete extras.modified;
+  delete extras.description;
+  delete extras.tags;
 
-  const output = `${frontmatterToString(normalized)}${content.trim()}\n`;
+  const normalized = omitUndefinedEntries(
+    rewriteFrontmatterAssetFields(
+      {
+        ...extras,
+        id: data.id ? String(data.id).trim() : undefined,
+        title,
+        slug,
+        created,
+        modified,
+        description,
+        tags,
+      },
+      slug,
+    ),
+  );
+
+  const rewrittenContent = normalizeCodeFenceLanguages(
+    rewriteMarkdownAssetPaths(content.trim(), slug),
+  );
+  const output = `${frontmatterToString(normalized)}${rewrittenContent}\n`;
   fs.writeFileSync(path.join(OUTPUT_DIR, `${slug}.md`), output, "utf-8");
+  assetCount += copyPostAssets(post.sourceDir, slug, post.entryPath);
   count += 1;
 }
 
-console.log(`[sync-posts] Synced ${count} post(s) from ${BLOG_DIR}`);
+console.log(
+  `[sync-posts] Synced ${count} post(s) and ${assetCount} asset(s) from ${BLOG_DIR}`,
+);

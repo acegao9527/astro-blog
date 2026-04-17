@@ -1,6 +1,6 @@
 # Astro 博客项目
 
-这是一个基于 Astro 6 的静态个人博客。文章依然来自本地 Markdown，但在构建前会先同步到 `src/content/posts`，再由 Astro content collections 统一校验、渲染和生成页面。
+这是一个基于 Astro 6 的静态个人博客。文章依然来自本地 Markdown，但在构建前会先同步到 `src/content/posts`，文章素材会同步到 `public/uploads/posts`，再由 Astro content collections 统一校验、渲染和生成页面。
 
 ## 已完成的优化
 
@@ -32,6 +32,30 @@ BLOG_DIR="/your/blog/dir" npm run dev
 SITE_URL="https://your-blog.com" npm run build
 ```
 
+## 数据源结构
+
+推荐的源目录结构：
+
+```text
+BLOG_DIR/
+  hermes-vs-openclaw/
+    index.md
+    cover.webp
+    compare-chart.png
+  openclaw-bu-shu-bi-kang-zhi-nan/
+    index.md
+    cover.webp
+    install-step-1.png
+```
+
+约定：
+
+- 每篇文章一个目录，目录名建议直接等于 `slug`
+- 正文文件固定为 `index.md`
+- 图片、PDF 等素材和文章放在同目录或其子目录
+- Markdown 中使用相对路径，例如 `![](./cover.webp)` 或 `[附件](./files/guide.pdf)`
+- 同步后素材会被复制到 `public/uploads/posts/<slug>/`
+
 ## Frontmatter
 
 支持的 frontmatter 字段：
@@ -45,6 +69,7 @@ created: 2026-02-24T12:02:13Z
 modified: 2026-02-24T12:02:13Z
 tags: tag1, tag2
 description: 可选摘要
+cover: ./cover.webp
 ---
 ```
 
@@ -52,7 +77,9 @@ description: 可选摘要
 
 - `tags` 可以是 `tag1, tag2` 或 YAML 数组
 - `description` 留空时会从正文自动截取摘要
+- `cover` 等相对素材路径会在同步时改写为站点路径
 - 同步脚本会把源 Markdown 规范化写入 `src/content/posts`
+- 正文中的相对素材链接会同步到 `public/uploads/posts/<slug>/`
 
 ## 命令
 
@@ -73,6 +100,8 @@ description: 可选摘要
 ├── public/
 │   ├── favicon.svg
 │   ├── favicon.ico
+│   ├── uploads/
+│   │   └── posts/            # 同步生成的文章素材
 │   └── robots.txt
 ├── scripts/
 │   └── sync-posts.mjs

@@ -5,8 +5,8 @@
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                         数据源 (MWeb)                            │
-│  /Users/acelee/Library/Mobile Documents/iCloud~com~coderforart~ │
-│  iOS~MWeb/Documents/blog/*.md                                   │
+│  /Users/acelee/Library/Mobile Documents/.../Documents/blog/     │
+│  └── <slug>/index.md + assets                                   │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -16,9 +16,10 @@
 │   npm run sync:posts                                            │
 │                                                                 │
 │   scripts/sync-posts.mjs                                        │
-│   - 读取原始 Markdown                                           │
+│   - 读取文章目录下的 index.md                                  │
 │   - 规范化 frontmatter                                          │
 │   - 自动生成 description                                        │
+│   - 复制文章素材到 public/uploads/posts                         │
 │   - 写入 src/content/posts                                      │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -58,6 +59,7 @@
 
 - 写作仍然在 MWeb / 本地 Markdown 中完成
 - 构建前同步到 `src/content/posts`
+- 文章素材构建前同步到 `public/uploads/posts`
 - Astro collection schema 负责字段校验
 - 页面渲染使用 Astro 原生 Markdown，而不是手写 `set:html`
 

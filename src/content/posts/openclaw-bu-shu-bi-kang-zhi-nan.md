@@ -1,10 +1,10 @@
 ---
+id: "D83CF5D8-B910-4A23-80C1-18375B129F19"
 title: "OpenClaw部署避坑指南"
 slug: "openclaw-bu-shu-bi-kang-zhi-nan"
-created: "2026-02-24T12:02:13Z"
-modified: "2026-02-24T12:02:13Z"
+created: "2026-02-24T12:02:13.000Z"
+modified: "2026-02-24T12:02:13.000Z"
 description: "1核1G小鸡能跑AI Agent吗？Docker部署避坑指南 当你终于下定决心，买了一台便宜的 1核1G（1C1G）VPS，准备部署属于自己的 AI Agent（比如 OpenClaw），幻想着它能 24 小时为你打工时…… 现实往往是残酷的：刚运行没多久，Agent 就莫名其妙"
-id: "D83CF5D8-B910-4A23-80C1-18375B129F19"
 tags: []
 ---
 # 1核1G小鸡能跑AI Agent吗？Docker部署避坑指南

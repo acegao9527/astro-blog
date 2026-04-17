@@ -11,6 +11,7 @@ const posts = defineCollection({
     created: z.coerce.date(),
     modified: z.coerce.date(),
     description: z.string().min(1),
+    cover: z.string().optional(),
     tags: z.array(z.string()).default([]),
   }),
 });

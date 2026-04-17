@@ -282,14 +282,27 @@ img {
 }
 
 .article {
+  position: relative;
   padding: 2rem 0 4rem;
 }
 
+.article .back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
 .article-shell {
+  position: relative;
   padding: 1.3rem;
+  transition: transform 220ms ease;
+}
+
+.article[data-toc-layout="open"] .article-shell {
+  transform: translateX(-3.25rem);
 }
 
 .article-header {
+  position: relative;
   padding: 1rem 1rem 2rem;
   border-bottom: 1px solid var(--line);
 }
@@ -305,9 +318,114 @@ img {
   gap: 0.8rem;
 }
 
+.article-toc-toggle {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 8.75rem;
+  min-height: 2.75rem;
+  padding: 0.7rem 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-soft);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.article-toc-toggle:hover {
+  color: var(--accent-strong);
+  border-color: rgba(15, 118, 110, 0.2);
+}
+
 .article-content {
   padding: 1.8rem 1rem 1rem;
   font-size: 1.08rem;
+}
+
+.article-sidebar {
+  position: fixed;
+  top: var(--article-sidebar-top, 5.8rem);
+  left: calc(50% + min(calc(100vw - 2rem), var(--container)) / 2 - 3rem);
+  width: 280px;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.article[data-toc-layout="closed"] .article-sidebar {
+  transform: translateX(calc(100% + 0.75rem));
+  pointer-events: none;
+}
+
+.article-toc {
+  padding: 0.35rem 0.35rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow);
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.article[data-toc-layout="closed"] .article-toc {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.article-toc__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0.9rem;
+  font-weight: 700;
+}
+
+.article-toc__header span:last-child {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.article-toc nav {
+  padding: 0 0.4rem 0.2rem;
+}
+
+.article-toc__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.article-toc__item a {
+  display: block;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.8rem;
+  color: var(--text-soft);
+  text-decoration: none;
+}
+
+.article-toc__item a:hover {
+  color: var(--accent-strong);
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.article-toc__item--depth-3 a {
+  padding-left: 1.3rem;
+}
+
+.article-toc__item--depth-4 a {
+  padding-left: 1.9rem;
 }
 
 .article-content > *:first-child {
@@ -338,14 +456,30 @@ img {
 
 .article-content pre {
   overflow-x: auto;
-  padding: 1rem;
+  padding: 1.1rem 1.2rem;
   border-radius: var(--radius-md);
-  background: #f7f4ee;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .article-content code {
   font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
   font-size: 0.92em;
+}
+
+.article-content pre.astro-code {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+}
+
+.article-content pre.astro-code code {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.article-content pre.astro-code .line {
+  display: block;
+  min-height: 1.6em;
 }
 
 .article-content :not(pre) > code {
@@ -459,6 +593,45 @@ img {
   .hero {
     padding-top: 4rem;
   }
+
+  .article-sidebar {
+    position: fixed;
+    top: var(--article-sidebar-top, 5rem);
+    right: 0.75rem;
+    left: auto;
+    bottom: 1rem;
+    width: min(320px, calc(100vw - 1.5rem));
+    z-index: 20;
+    transform: translateX(calc(100% + 1rem));
+    opacity: 0;
+  }
+
+  .article[data-toc-layout="open"] .article-sidebar {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .article[data-toc-layout="closed"] .article-sidebar {
+    transform: translateX(calc(100% + 0.75rem));
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .article[data-toc-layout="open"] .article-shell {
+    transform: none;
+  }
+
+  .article-toc-toggle {
+    right: 0.4rem;
+    bottom: 0.4rem;
+    min-width: 8rem;
+  }
+
+  .article-toc {
+    height: 100%;
+    backdrop-filter: blur(18px);
+  }
 }
 
 @media (max-width: 640px) {
@@ -476,8 +649,8 @@ img {
     padding: 0.8rem;
   }
 
-  .article-content,
-  .article-header {
+  .article-header,
+  .article-content {
     padding-left: 0.4rem;
     padding-right: 0.4rem;
   }

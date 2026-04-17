@@ -22,6 +22,8 @@ const allPosts = await getAllPosts();
 const currentIndex = allPosts.findIndex(({ id }) => id === post.id);
 const previousPost = currentIndex >= 0 ? allPosts[currentIndex + 1] : undefined;
 const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : undefined;
+const tocHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 4);
+const tocPanelId = `article-toc-${post.data.slug}`;
 ---
 
 <Layout
@@ -32,7 +34,10 @@ const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : undefined;
   modifiedTime={post.data.modified}
   tags={post.data.tags}
 >
-  <section class="article container">
+  <section
+    class="article container"
+    data-toc-layout={tocHeadings.length > 0 ? "closed" : "none"}
+  >
     <a class="back-link" href="/">← 返回首页</a>
     <article class="article-shell">
       <header class="article-header">
@@ -45,6 +50,17 @@ const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : undefined;
           )}
           {headings.length > 0 && <span>{headings.length} 个章节</span>}
         </div>
+        {tocHeadings.length > 0 && (
+        <button
+          class="article-toc-toggle"
+          type="button"
+          data-toc-toggle
+          aria-controls={tocPanelId}
+          aria-expanded="false"
+        >
+          显示隐藏大纲
+        </button>
+        )}
         {post.data.tags.length > 0 && (
           <div class="post-meta-tags" aria-label="文章标签">
             {post.data.tags.map((tag) => (
@@ -59,6 +75,25 @@ const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : undefined;
         <Content />
       </div>
     </article>
+    {tocHeadings.length > 0 && (
+      <aside class="article-sidebar" id={tocPanelId} aria-label="文章大纲">
+        <div class="article-toc">
+          <div class="article-toc__header">
+            <span>文章大纲</span>
+            <span>{tocHeadings.length} 节</span>
+          </div>
+          <nav aria-label="文章目录">
+            <ol class="article-toc__list">
+              {tocHeadings.map((heading) => (
+                <li class={`article-toc__item article-toc__item--depth-${heading.depth}`}>
+                  <a href={`#${heading.slug}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </div>
+      </aside>
+    )}
 
     <nav class="post-nav" aria-label="文章翻页">
       {previousPost ? (
@@ -80,3 +115,36 @@ const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : undefined;
     </nav>
   </section>
 </Layout>
+
+<script is:inline>
+  const toggleButton = document.querySelector("[data-toc-toggle]");
+  const articleSection = document.querySelector(".article[data-toc-layout]");
+  const articleShell = document.querySelector(".article-shell");
+
+  const syncSidebarTop = () => {
+    if (!articleSection || !articleShell) return;
+    articleSection.style.setProperty(
+      "--article-sidebar-top",
+      `${articleShell.getBoundingClientRect().top}px`,
+    );
+  };
+
+  if (
+    toggleButton &&
+    articleSection &&
+    articleSection.dataset.tocLayout !== "none"
+  ) {
+    toggleButton.addEventListener("click", () => {
+      const nextState =
+        articleSection.dataset.tocLayout === "open" ? "closed" : "open";
+      articleSection.dataset.tocLayout = nextState;
+      toggleButton.setAttribute(
+        "aria-expanded",
+        nextState === "open" ? "true" : "false",
+      );
+    });
+  }
+
+  syncSidebarTop();
+  window.addEventListener("resize", syncSidebarTop);
+</script>

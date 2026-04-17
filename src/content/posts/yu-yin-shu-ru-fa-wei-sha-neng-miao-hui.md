@@ -1,14 +1,12 @@
 ---
+id: "F8DD79F7-6494-4E9E-9310-E508FB4CC0E3"
 title: "语音输入法为啥能秒回"
 slug: "yu-yin-shu-ru-fa-wei-sha-neng-miao-hui"
-created: "2026-02-26T09:38:50Z"
-modified: "2026-02-26T09:38:50Z"
+created: "2026-02-26T09:38:50.000Z"
+modified: "2026-02-26T09:38:50.000Z"
 description: "AI 语音输入法为何能“秒回”？拆解 Typeless 背后的技术原理与 Moonshine 的野心 最近，你可能注意到一类软件正在悄悄接管很多人的键盘——AI 语音输入法。 从国外的 Typeless、Superwhisper、Wispr Flow，到国内各种层出不穷的“AI"
-id: "F8DD79F7-6494-4E9E-9310-E508FB4CC0E3"
 tags: []
 ---
-![封面图](https://hailuo-image-algeng-data.oss-cn-wulanchabu.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-02-26%2Ff6fe8939-6915-4781-9816-ccd8f50c77b2_aigc.jpeg?Expires=1772184689&OSSAccessKeyId=LTAI5tB2SwrRwAtD23etQUbC&Signature=ifl13kKpjpiPz%2FDdJIRSj%2Fet5eY%3D)
-
 # AI 语音输入法为何能“秒回”？拆解 Typeless 背后的技术原理与 Moonshine 的野心
 
 最近，你可能注意到一类软件正在悄悄接管很多人的键盘——**AI 语音输入法**。
@@ -25,7 +23,6 @@ tags: []
 
 ## 一、 以前是“速记员”，现在是“秘书”
 
-![速记员到秘书的演变](https://hailuo-image-algeng-data.oss-cn-wulanchabu.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-02-26%2Ffaae8cc4-86e7-4e41-86a8-24f3f118c9d8_aigc.jpeg?Expires=1772184706&OSSAccessKeyId=LTAI5tB2SwrRwAtD23etQUbC&Signature=TbC3IzYmCOmS5Ms7sqYH7Jf2rl0%3D)
 
 传统的语音输入（如早期的 Siri 或键盘自带听写），本质上是 **ASR（自动语音识别）**。它的工作仅仅是把声波转换成文字，你结巴它也结巴，你带口音它就乱码。
 
@@ -42,7 +39,6 @@ tags: []
 
 ## 二、 揭秘“秒回”的真相：流水线工厂
 
-![秒回流水线](https://hailuo-image-algeng-data.oss-cn-wulanchabu.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-02-26%2F91397f93-4395-4e30-83a4-2ae3f20f917c_aigc.jpeg?Expires=1772184722&OSSAccessKeyId=LTAI5tB2SwrRwAtD23etQUbC&Signature=y6Dus%2B1Q14s8ycBSi3hfL9Yj%2BIs%3D)
 
 很多用户（甚至开发者）最初的猜想流程是这样的：
 > 用户录音结束 -> 上传音频 -> 转录成文字 -> 发给大模型润色 -> 返回结果。

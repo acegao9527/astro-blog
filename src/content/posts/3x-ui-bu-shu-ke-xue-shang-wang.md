@@ -1,8 +1,8 @@
 ---
 title: "🚀 3x-ui 部署科学上网"
 slug: "3x-ui-bu-shu-ke-xue-shang-wang"
-created: "2026-04-13T09:53:41Z"
-modified: "2026-04-13T10:37:19Z"
+created: "2026-04-13T09:53:41.000Z"
+modified: "2026-04-13T10:37:19.000Z"
 description: "📋 准备工作 Checklist 1. VPS 一台：假设 IP 为 ，系统为 Ubuntu/Debian。 2. 域名一个：假设为 。 3. 端口检查：确保 VPS 的 80 端口 和 443 端口 未被占用（用于申请证书和运行服务）。 --- 步骤一：DNS 解析配置 在你"
 tags: []
 ---
@@ -32,7 +32,7 @@ tags: []
 
 ### 1. 创建目录与配置文件
 
-```other
+```bash
 mkdir 3x-ui
 vi docker-compose.yml
 ```
@@ -58,7 +58,7 @@ services:
 
 ### 3. 启动容器
 
-```other
+```bash
 sudo docker compose up -d
 ```
 
