@@ -3,7 +3,9 @@ import Layout from "../../layouts/Layout.astro";
 import { formatDate, getAllPosts, groupPostsByYear, getPostUrl } from "../../lib/blog";
 
 const posts = await getAllPosts();
-const groupedPosts = Object.entries(groupPostsByYear(posts));
+const groupedPosts = Object.entries(groupPostsByYear(posts)).sort(
+  ([leftYear], [rightYear]) => Number(rightYear) - Number(leftYear),
+);
 ---
 
 <Layout

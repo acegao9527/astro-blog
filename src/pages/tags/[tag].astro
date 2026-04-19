@@ -7,7 +7,7 @@ export async function getStaticPaths() {
   const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
 
   return tags.map((tag) => ({
-    params: { tag: encodeURIComponent(tag) },
+    params: { tag },
     props: {
       tag,
       posts: posts.filter((post) => post.data.tags.includes(tag)),

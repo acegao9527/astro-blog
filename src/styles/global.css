@@ -212,6 +212,16 @@ img {
   gap: 1rem;
 }
 
+.section-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.load-more-button[hidden] {
+  display: none;
+}
+
 .post-card,
 .article-shell,
 .taxonomy-card,

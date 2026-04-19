@@ -4,6 +4,14 @@ import { formatDate, getAllPosts, getTagHref } from "../lib/blog";
 
 const posts = await getAllPosts();
 const latestPosts = posts.slice(0, 8);
+const remainingPosts = posts.slice(8).map((post) => ({
+  title: post.data.title,
+  description: post.data.description,
+  href: `/post/${post.data.slug}/`,
+  createdIso: post.data.created.toISOString(),
+  createdLabel: formatDate(post.data.created),
+  tags: post.data.tags,
+}));
 const tagCounts = posts
   .flatMap((post) => post.data.tags)
   .reduce((acc, tag) => {
@@ -37,7 +45,7 @@ const topTags = [...tagCounts.entries()]
       <h2>最近更新</h2>
       <a href="/archive/">全部文章</a>
     </div>
-    <ul class="post-list" aria-label="文章列表">
+    <ul class="post-list" id="home-post-list" aria-label="文章列表">
       {latestPosts.map((post) => (
         <li class="post-card">
           <a class="post-card__link" href={`/post/${post.data.slug}/`}>
@@ -57,7 +65,85 @@ const topTags = [...tagCounts.entries()]
         </li>
       ))}
     </ul>
+    {remainingPosts.length > 0 && (
+      <div class="section-actions">
+        <button
+          class="button load-more-button"
+          id="load-more-posts"
+          type="button"
+          aria-controls="home-post-list"
+        >
+          查看更多博文
+        </button>
+      </div>
+    )}
   </section>
+
+  {remainingPosts.length > 0 && (
+    <script define:vars={{ remainingPosts, batchSize: 8 }}>
+      const list = document.querySelector(".post-list");
+      const button = document.getElementById("load-more-posts");
+
+      if (list instanceof HTMLUListElement && button instanceof HTMLButtonElement) {
+        let visibleCount = 0;
+
+        const renderTag = (tag) => {
+          const span = document.createElement("span");
+          span.className = "tag";
+          span.textContent = tag;
+          return span;
+        };
+
+        const renderPost = (post) => {
+          const item = document.createElement("li");
+          item.className = "post-card";
+
+          const link = document.createElement("a");
+          link.className = "post-card__link";
+          link.href = post.href;
+
+          const topline = document.createElement("div");
+          topline.className = "post-card__topline";
+
+          const time = document.createElement("time");
+          time.dateTime = post.createdIso;
+          time.textContent = post.createdLabel;
+          topline.append(time);
+
+          const title = document.createElement("h3");
+          title.textContent = post.title;
+
+          const description = document.createElement("p");
+          description.textContent = post.description;
+
+          link.append(topline, title, description);
+
+          if (post.tags.length > 0) {
+            const tagList = document.createElement("div");
+            tagList.className = "tag-list";
+            tagList.setAttribute("aria-label", "文章标签");
+            post.tags.forEach((tag) => tagList.append(renderTag(tag)));
+            link.append(tagList);
+          }
+
+          item.append(link);
+          return item;
+        };
+
+        const loadMorePosts = () => {
+          const nextPosts = remainingPosts.slice(visibleCount, visibleCount + batchSize);
+          nextPosts.forEach((post) => list.append(renderPost(post)));
+          visibleCount += nextPosts.length;
+
+          if (visibleCount >= remainingPosts.length) {
+            button.hidden = true;
+          }
+        };
+
+        button.addEventListener("click", loadMorePosts);
+      }
+    </script>
+  )}
 
   {topTags.length > 0 && (
     <section class="container section">

@@ -8,7 +8,7 @@ const ROOT_DIR = path.resolve(__dirname, "..");
 const DEFAULT_BLOG_DIR =
   "/Users/acelee/Library/Mobile Documents/iCloud~md~obsidian/Documents/ClawDoc/blog";
 const BLOG_DIR = process.env.BLOG_DIR || DEFAULT_BLOG_DIR;
-const OUTPUT_DIR = path.join(ROOT_DIR, "content", "posts");
+const OUTPUT_DIR = path.join(ROOT_DIR, ".cache", "content", "posts");
 const OUTPUT_ASSET_DIR = path.join(ROOT_DIR, "public", "uploads", "posts");
 const FRONTMATTER_ASSET_FIELDS = ["cover", "hero", "image", "ogImage"];
 const FILE_MODE = 0o644;
@@ -233,44 +233,110 @@ function normalizeCodeFenceLanguages(content) {
   return content.replace(/^```other(\s*)$/gm, "```bash$1");
 }
 
+function isMarkdownFile(name) {
+  return name.endsWith(".md") || name.endsWith(".mdx");
+}
+
+function isIndexLikeMarkdownFile(name) {
+  const lowerName = name.toLowerCase();
+  return (
+    lowerName === "index.auto.md" ||
+    lowerName === "index.auto.mdx" ||
+    lowerName === "index.md" ||
+    lowerName === "index.mdx"
+  );
+}
+
+function findPostEntryFilename(postDir, entryName) {
+  const candidateNames = ["post.md", "index.md", "post.mdx", "index.mdx"];
+  const explicitEntry = candidateNames.find((name) =>
+    fs.existsSync(path.join(postDir, name)),
+  );
+
+  if (explicitEntry) {
+    return explicitEntry;
+  }
+
+  const markdownFiles = fs
+    .readdirSync(postDir, { withFileTypes: true })
+    .filter(
+      (child) =>
+        child.isFile() &&
+        !child.name.startsWith(".") &&
+        isMarkdownFile(child.name) &&
+        !isIndexLikeMarkdownFile(child.name),
+    )
+    .map((child) => child.name)
+    .sort((a, b) => a.localeCompare(b, "zh-CN"));
+
+  if (markdownFiles.length === 0) {
+    return null;
+  }
+
+  const sameNameFile = markdownFiles.find((filename) => {
+    const basename = path.basename(filename, path.extname(filename));
+    return basename === entryName;
+  });
+
+  return sameNameFile || markdownFiles[0];
+}
+
 function listPostEntries(rootDir) {
-  const entries = fs.readdirSync(rootDir, { withFileTypes: true });
   const posts = [];
+  const seenEntries = new Set();
 
-  for (const entry of entries) {
-    if (entry.name.startsWith(".")) continue;
-    if (!entry.isDirectory()) continue;
-
-    const postDir = path.join(rootDir, entry.name);
-    const candidateNames = ["post.md", "index.md", "post.mdx", "index.mdx"];
-    const entryFilename = candidateNames.find((name) =>
-      fs.existsSync(path.join(postDir, name)),
-    );
-    if (!entryFilename) continue;
+  function addPostEntry(entryPath, sourceDir, fallbackSlug, sortKey) {
+    const normalizedEntryPath = path.normalize(entryPath);
+    if (seenEntries.has(normalizedEntryPath)) return;
+    seenEntries.add(normalizedEntryPath);
 
     posts.push({
-      entryPath: path.join(postDir, entryFilename),
-      sourceDir: postDir,
-      fallbackSlug: entry.name,
-      sortKey: entry.name,
+      entryPath: normalizedEntryPath,
+      sourceDir,
+      fallbackSlug,
+      sortKey,
     });
   }
 
-  for (const entry of entries) {
-    if (entry.name.startsWith(".")) continue;
-    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+  function visitDirectory(currentDir) {
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
 
-    const filePath = path.join(rootDir, entry.name);
-    const basename = path.basename(entry.name, path.extname(entry.name));
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) continue;
+      if (!entry.isDirectory()) continue;
 
-    posts.push({
-      entryPath: filePath,
-      sourceDir: rootDir,
-      fallbackSlug: basename,
-      sortKey: basename,
-    });
+      const postDir = path.join(currentDir, entry.name);
+      const entryFilename = findPostEntryFilename(postDir, entry.name);
+      const relativeDir = path.relative(rootDir, postDir);
+      const fallbackSlug = relativeDir.split(path.sep).pop() || entry.name;
+
+      if (entryFilename) {
+        addPostEntry(
+          path.join(postDir, entryFilename),
+          postDir,
+          fallbackSlug,
+          relativeDir,
+        );
+      }
+
+      visitDirectory(postDir);
+    }
+
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) continue;
+      if (!entry.isFile()) continue;
+      if (!isMarkdownFile(entry.name)) continue;
+      if (isIndexLikeMarkdownFile(entry.name)) continue;
+
+      const filePath = path.join(currentDir, entry.name);
+      const basename = path.basename(entry.name, path.extname(entry.name));
+      const relativeFile = path.relative(rootDir, filePath);
+
+      addPostEntry(filePath, currentDir, basename, relativeFile);
+    }
   }
 
+  visitDirectory(rootDir);
   return posts.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "zh-CN"));
 }
 

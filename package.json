@@ -8,7 +8,7 @@
   "scripts": {
     "sync:posts": "node ./scripts/sync-posts.mjs",
     "dev": "npm run sync:posts && astro dev",
-    "build": "npm run sync:posts && astro build",
+    "build": "node ./scripts/build.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
