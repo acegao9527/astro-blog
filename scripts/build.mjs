@@ -1,10 +1,8 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { ROOT_DIR, getProjectConfig, requireConfigValue } from "./config.mjs";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = path.resolve(__dirname, "..");
 const CACHE_DIR = path.join(ROOT_DIR, ".cache", "content", "posts");
 
 function run(command, args) {
@@ -20,6 +18,10 @@ function run(command, args) {
 
   return 1;
 }
+
+const config = getProjectConfig();
+requireConfigValue("BLOG_DIR", config.blogDir, "content sync");
+requireConfigValue("SITE_URL", config.siteUrl, "production build");
 
 const syncCode = run("npm", ["run", "sync:posts"]);
 if (syncCode !== 0) {

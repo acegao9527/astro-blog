@@ -1,0 +1,31 @@
+---
+import { formatDate, type BlogPost } from "../lib/blog";
+
+interface Props {
+  posts: BlogPost[];
+  listLabel?: string;
+}
+
+const { posts, listLabel = "文章列表" } = Astro.props;
+---
+
+<ul class="post-list" aria-label={listLabel}>
+  {posts.map((post) => (
+    <li class="post-card">
+      <a class="post-card__link" href={`/post/${post.data.slug}/`}>
+        <div class="post-card__topline">
+          <time datetime={post.data.created.toISOString()}>{formatDate(post.data.created)}</time>
+        </div>
+        <h3>{post.data.title}</h3>
+        <p>{post.data.description}</p>
+        {post.data.tags.length > 0 && (
+          <div class="tag-list" aria-label="文章标签">
+            {post.data.tags.map((tag) => (
+              <span class="tag">{tag}</span>
+            ))}
+          </div>
+        )}
+      </a>
+    </li>
+  ))}
+</ul>

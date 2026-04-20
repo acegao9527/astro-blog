@@ -1,12 +1,13 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import { getProjectConfig } from './scripts/config.mjs';
 
-const site = process.env.SITE_URL || 'https://example.com';
+const { siteUrl } = getProjectConfig();
 
 // https://astro.build/config
 export default defineConfig({
-	site,
+	site: siteUrl,
 	integrations: [sitemap()],
 	markdown: {
 		shikiConfig: {

@@ -4,8 +4,8 @@
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                         数据源 (MWeb)                            │
-│  /Users/acelee/Library/Mobile Documents/.../Documents/blog/     │
+│                        数据源 (本地 Markdown)                    │
+│  BLOG_DIR=<absolute path>                                       │
 │  └── <slug>/index.md + assets                                   │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -20,7 +20,7 @@
 │   - 规范化 frontmatter                                          │
 │   - 自动生成 description                                        │
 │   - 复制文章素材到 public/uploads/posts                         │
-│   - 写入 content/posts                                          │
+│   - 写入 .cache/content/posts                                   │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -57,8 +57,8 @@
 
 ### 内容系统
 
-- 写作仍然在 MWeb / 本地 Markdown 中完成
-- 构建前同步到 `content/posts`
+- 写作仍然在本地 Markdown 中完成
+- 构建前同步到 `.cache/content/posts`
 - 文章素材构建前同步到 `public/uploads/posts`
 - Astro collection schema 负责字段校验
 - 页面渲染使用 Astro 原生 Markdown，而不是手写 `set:html`
@@ -76,3 +76,4 @@
 
 - `BLOG_DIR`：覆盖本地 Markdown 目录
 - `SITE_URL`：设置站点绝对地址，用于 canonical、RSS 和 sitemap
+- 两者都可以写在仓库根目录 `.env` 中，缺失时构建会直接失败

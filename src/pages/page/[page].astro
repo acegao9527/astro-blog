@@ -1,0 +1,46 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PaginationNav from "../../components/PaginationNav.astro";
+import PostCardList from "../../components/PostCardList.astro";
+import {
+  getAllPosts,
+  getPaginatedPosts,
+  getTotalPages,
+} from "../../lib/blog";
+
+export async function getStaticPaths() {
+  const posts = await getAllPosts();
+  const totalPages = getTotalPages(posts.length);
+
+  return Array.from({ length: Math.max(totalPages - 1, 0) }, (_, index) => {
+    const page = index + 2;
+    return {
+      params: { page: String(page) },
+      props: {
+        page,
+        posts: getPaginatedPosts(posts, page),
+        totalPages,
+        totalPosts: posts.length,
+      },
+    };
+  });
+}
+
+const { page, posts, totalPages, totalPosts } = Astro.props;
+---
+
+<Layout
+  title={`最近更新 · 第 ${page} 页`}
+  description={`博客文章分页列表，第 ${page} 页，共 ${totalPages} 页。`}
+>
+  <section class="container page-section">
+    <header class="page-header">
+      <div class="eyebrow">Page {page}</div>
+      <h1>最近更新</h1>
+      <p>第 {page} 页，共 {totalPages} 页，当前站点共有 {totalPosts} 篇文章。</p>
+    </header>
+
+    <PostCardList posts={posts} />
+    <PaginationNav currentPage={page} totalPages={totalPages} />
+  </section>
+</Layout>

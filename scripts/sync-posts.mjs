@@ -1,13 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import matter from "gray-matter";
+import { ROOT_DIR, getProjectConfig, requireConfigValue } from "./config.mjs";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = path.resolve(__dirname, "..");
-const DEFAULT_BLOG_DIR =
-  "/Users/acelee/Library/Mobile Documents/iCloud~md~obsidian/Documents/ClawDoc/blog";
-const BLOG_DIR = process.env.BLOG_DIR || DEFAULT_BLOG_DIR;
+const { blogDir: configuredBlogDir } = getProjectConfig();
+const BLOG_DIR = requireConfigValue(
+  "BLOG_DIR",
+  configuredBlogDir,
+  "content sync",
+);
 const OUTPUT_DIR = path.join(ROOT_DIR, ".cache", "content", "posts");
 const OUTPUT_ASSET_DIR = path.join(ROOT_DIR, "public", "uploads", "posts");
 const FRONTMATTER_ASSET_FIELDS = ["cover", "hero", "image", "ogImage"];
