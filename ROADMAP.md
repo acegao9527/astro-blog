@@ -18,6 +18,8 @@
 
 ## Backlog
 
+- [ ] 公众号极简技术文样式优化
+  目标：把博客文章页逐步打磨成接近优质公众号技术长文的阅读体验，风格关键词为极简、克制、学术感、技术研究风。详细路线图见 [`docs/wechat-style-roadmap.md`](./docs/wechat-style-roadmap.md)。
 - [ ] 内容同步脚本测试
   目标：为 `scripts/sync-posts.mjs` 增加最小回归保护，覆盖 slug 冲突、缺失字段和素材改写等关键场景。
 - [ ] 中文 slug 路径策略
