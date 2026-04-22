@@ -1,5 +1,7 @@
 # 公众号极简样式优化路线图
 
+https://mp.weixin.qq.com/s/R8r4WSi1eEh0r0Uwxo_5dA?from=singlemessage&isappinstalled=0&scene=1&clicktime=1776836637&enterid=1776836637
+
 > 目标：把当前博客逐步打磨成接近优质微信公众号技术长文的阅读体验，风格关键词为 **极简、克制、学术感、技术研究风**。
 
 ## 优化背景
