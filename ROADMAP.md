@@ -26,6 +26,8 @@
   目标：评估是否继续保留当前中文路径编码结果，或统一为更稳定的 ASCII slug 方案。
 - [ ] 统一封面图约定
   目标：明确 `cover`、`hero`、`ogImage` 的职责，避免 frontmatter 能力和页面消费能力继续分叉。
+- [ ] 评论模块
+  目标：为文章页增加轻量、稳定、低维护的评论能力，优先保证静态站点兼容性、加载性能和垃圾评论可控性。详细路线图见 [`docs/comment-module-roadmap.md`](./docs/comment-module-roadmap.md)。
 
 ## Workflow
 
