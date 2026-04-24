@@ -1,23 +1,27 @@
 # AGENTS.md
 
-This file defines repository-level instructions for Codex working in this project.
+本文件定义 Codex 在本仓库中的仓库级协作指令。
 
-## Project Rules
+## 核心要求
 
-- After every code or content change, run `npm run build`.
-- If the build succeeds, immediately run `npm run deploy`.
-- After `npm run deploy` succeeds, immediately commit and push the related repository changes unless the user explicitly asks not to.
-- Treat the deployed blog URL as the primary review surface. The goal is that the latest change is visible at the live site right after the change is finished.
+- 如无必要，勿增实体。
 
-## Operational Notes
+## 项目规则
 
-- Do not skip deploy after a successful build, even for small UI or content changes.
-- If `npm run build` fails, fix the issue before attempting `npm run deploy`.
-- If `npm run deploy` fails, report the failure clearly and include the reason.
+- 每次代码或内容变更后，都必须运行 `npm run build`。
+- 如果构建成功，必须立即运行 `npm run deploy`。
+- `npm run deploy` 成功后，除非用户明确要求不要这样做，否则必须立即提交并推送本次相关仓库变更。
+- 以已部署的博客网址作为主要验收界面。目标是每次改动完成后，都能立刻在在线站点看到最新结果。
 
-## Project Identity
+## 操作说明
 
-When the user refers to this project in natural language, treat the following names as aliases for this repository by default:
+- 即使只是很小的 UI 或内容改动，构建成功后也不要跳过部署。
+- 如果 `npm run build` 失败，先修复问题，再尝试 `npm run deploy`。
+- 如果 `npm run deploy` 失败，要明确说明失败原因。
+
+## 项目标识
+
+当用户在自然语言中提到本项目时，默认将以下名称视为本仓库别名：
 
 - 博客项目
 - astro-blog
@@ -25,8 +29,8 @@ When the user refers to this project in natural language, treat the following na
 - 博客仓库
 - 博客站点
 
-Project anchors:
+项目锚点：
 
-- Repo: `/Users/acelee/workspace/astro-blog`
-- Blog Dir: `/Users/acelee/Library/Mobile Documents/iCloud~md~obsidian/Documents/ClawDoc/blog`
-- Site URL: `https://clawasync.com`
+- Repo：`/Users/acelee/workspace/astro-blog`
+- Blog Dir：`/Users/acelee/Library/Mobile Documents/iCloud~md~obsidian/Documents/ClawDoc/blog`
+- Site URL：`https://clawasync.com`
