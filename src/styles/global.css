@@ -32,12 +32,20 @@ body {
   min-height: 100vh;
   color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 28%),
-    radial-gradient(circle at top right, rgba(180, 83, 9, 0.12), transparent 26%),
+    radial-gradient(
+      circle at top left,
+      rgba(15, 118, 110, 0.16),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(180, 83, 9, 0.12),
+      transparent 26%
+    ),
     linear-gradient(180deg, #fbf8f2 0%, var(--bg) 100%);
   font-family:
-    "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Source Han Serif SC",
-    serif;
+    "Iowan Old Style", "Palatino Linotype", "Noto Serif SC",
+    "Source Han Serif SC", serif;
   line-height: 1.75;
 }
 
@@ -303,10 +311,6 @@ img {
   transition: transform 220ms ease;
 }
 
-.article[data-toc-layout="open"] .article-shell {
-  transform: translateX(-3.25rem);
-}
-
 .article-header {
   position: relative;
   padding: 1rem 1rem 2rem;
@@ -360,7 +364,7 @@ img {
 .article-sidebar {
   position: fixed;
   top: var(--article-sidebar-top, 5.8rem);
-  left: calc(50% + min(calc(100vw - 2rem), var(--container)) / 2 - 3rem);
+  right: calc(50% - (min(calc(100vw - 2rem), var(--container)) / 2) - 3.25rem);
   width: 280px;
   transition:
     opacity 180ms ease,
@@ -677,20 +681,6 @@ img {
     bottom: 1rem;
     width: min(320px, calc(100vw - 1.5rem));
     z-index: 20;
-    transform: translateX(calc(100% + 1rem));
-    opacity: 0;
-  }
-
-  .article[data-toc-layout="open"] .article-sidebar {
-    transform: translateX(0);
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .article[data-toc-layout="closed"] .article-sidebar {
-    transform: translateX(calc(100% + 0.75rem));
-    opacity: 0;
-    pointer-events: none;
   }
 
   .article[data-toc-layout="open"] .article-shell {
