@@ -58,7 +58,14 @@ const tocPanelId = `article-toc-${post.data.slug}`;
           aria-controls={tocPanelId}
           aria-expanded="false"
         >
-          显示隐藏大纲
+          <svg class="icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2v8"/>
+            <circle cx="12" cy="14" r="4"/>
+            <path d="M12 18v4"/>
+            <path d="M6 14h2"/>
+            <path d="M16 14h2"/>
+          </svg>
+          <span data-toc-toggle-text>显示大纲</span>
         </button>
         )}
         {post.data.tags.length > 0 && (
@@ -79,7 +86,7 @@ const tocPanelId = `article-toc-${post.data.slug}`;
       <aside class="article-sidebar" id={tocPanelId} aria-label="文章大纲">
         <div class="article-toc">
           <div class="article-toc__header">
-            <span>文章大纲</span>
+            <span>太长不读</span>
             <span>{tocHeadings.length} 节</span>
           </div>
           <nav aria-label="文章目录">
@@ -118,6 +125,7 @@ const tocPanelId = `article-toc-${post.data.slug}`;
 
 <script is:inline>
   const toggleButton = document.querySelector("[data-toc-toggle]");
+  const toggleText = document.querySelector("[data-toc-toggle-text]");
   const articleSection = document.querySelector(".article[data-toc-layout]");
   const articleShell = document.querySelector(".article-shell");
   const tocLinks = Array.from(
@@ -167,6 +175,9 @@ const tocPanelId = `article-toc-${post.data.slug}`;
         "aria-expanded",
         nextState === "open" ? "true" : "false",
       );
+      if (toggleText) {
+        toggleText.textContent = nextState === "open" ? "收起" : "显示大纲";
+      }
     });
   }
 
