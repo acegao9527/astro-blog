@@ -155,7 +155,7 @@ npm run deploy
 实际同步目标：
 
 - SSH 别名：`ta`
-- 服务器路径：`/home/ubuntu/docker/nginx-blog/html/`
+- 服务器路径：`/home/ubuntu/nginx-blog/html/`
 
 部署前确保：
 
