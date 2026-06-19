@@ -255,12 +255,37 @@ function toPublicAssetPath(slug, relativePath) {
   const pathname =
     suffixIndex === -1 ? normalized : normalized.slice(0, suffixIndex);
   const suffix = suffixIndex === -1 ? "" : normalized.slice(suffixIndex);
-  const safePath = pathname
+  const safePath = toSafeAssetPath(pathname);
+
+  return `/uploads/posts/${slug}/${safePath}${suffix}`;
+}
+
+function toSafeAssetPath(relativePath) {
+  return relativePath
     .split(/[\\/]/)
     .filter((segment) => segment && segment !== "." && segment !== "..")
     .join("/");
+}
 
-  return `/uploads/posts/${slug}/${safePath}${suffix}`;
+function splitLinkedDestination(destination) {
+  const trimmed = destination.trim();
+  let pathPart = trimmed;
+  let suffix = "";
+
+  if (trimmed.startsWith("<")) {
+    const closingIndex = trimmed.indexOf(">");
+    if (closingIndex === -1) return null;
+    pathPart = trimmed.slice(1, closingIndex);
+    suffix = trimmed.slice(closingIndex + 1);
+  } else {
+    const whitespaceIndex = trimmed.search(/\s/);
+    if (whitespaceIndex !== -1) {
+      pathPart = trimmed.slice(0, whitespaceIndex);
+      suffix = trimmed.slice(whitespaceIndex);
+    }
+  }
+
+  return { pathPart, suffix };
 }
 
 function toPostAssetPath(slug, relativePath) {
@@ -297,22 +322,9 @@ function rewriteMarkdownAssetPaths(content, slug) {
   return content.replace(
     /(!?\[[^\]]*]\()([^)\n]+)(\))/g,
     (match, start, destination, end) => {
-      const trimmed = destination.trim();
-      let pathPart = trimmed;
-      let suffix = "";
-
-      if (trimmed.startsWith("<")) {
-        const closingIndex = trimmed.indexOf(">");
-        if (closingIndex === -1) return match;
-        pathPart = trimmed.slice(1, closingIndex);
-        suffix = trimmed.slice(closingIndex + 1);
-      } else {
-        const whitespaceIndex = trimmed.search(/\s/);
-        if (whitespaceIndex !== -1) {
-          pathPart = trimmed.slice(0, whitespaceIndex);
-          suffix = trimmed.slice(whitespaceIndex);
-        }
-      }
+      const parsed = splitLinkedDestination(destination);
+      if (!parsed) return match;
+      const { pathPart, suffix } = parsed;
 
       if (!isRelativeAssetPath(pathPart)) {
         return match;
@@ -329,6 +341,32 @@ function rewriteMarkdownAssetPaths(content, slug) {
   );
 }
 
+function collectMarkdownAssetPaths(content) {
+  const assetPaths = new Set();
+
+  for (const match of content.matchAll(/!?\[[^\]]*]\(([^)\n]+)\)/g)) {
+    const parsed = splitLinkedDestination(match[1]);
+    if (!parsed) continue;
+    if (isRelativeAssetPath(parsed.pathPart)) {
+      assetPaths.add(parsed.pathPart);
+    }
+  }
+
+  return assetPaths;
+}
+
+function collectFrontmatterAssetPaths(data) {
+  const assetPaths = new Set();
+
+  for (const field of FRONTMATTER_ASSET_FIELDS) {
+    if (isRelativeAssetPath(data[field])) {
+      assetPaths.add(String(data[field]));
+    }
+  }
+
+  return assetPaths;
+}
+
 function normalizeCodeFenceLanguages(content) {
   return content.replace(/^```other(\s*)$/gm, "```bash$1");
 }
@@ -340,6 +378,7 @@ function isMarkdownFile(name) {
 function isIndexLikeMarkdownFile(name) {
   const lowerName = name.toLowerCase();
   return (
+    lowerName === "agents.md" ||
     lowerName === "index.auto.md" ||
     lowerName === "index.auto.mdx" ||
     lowerName === "index.md" ||
@@ -440,35 +479,34 @@ function listPostEntries(rootDir) {
   return posts.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "zh-CN"));
 }
 
-function copyPostAssets(sourceDir, slug, entryPath) {
+function copyReferencedAssets(sourceDir, slug, relativeAssetPaths) {
   const targetDir = path.join(OUTPUT_ASSET_DIR, slug);
   let copied = 0;
+  const copiedDestinations = new Set();
 
-  function walk(currentDir) {
-    for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
-      if (entry.name.startsWith(".")) continue;
-      const absolutePath = path.join(currentDir, entry.name);
+  for (const relativePath of relativeAssetPaths) {
+    const normalized = String(relativePath).replace(/^<|>$/g, "");
+    const suffixIndex = normalized.search(/[?#]/);
+    const pathname =
+      suffixIndex === -1 ? normalized : normalized.slice(0, suffixIndex);
+    const absolutePath = path.resolve(sourceDir, pathname);
 
-      if (entry.isDirectory()) {
-        walk(absolutePath);
-        continue;
-      }
-
-      if (!entry.isFile()) continue;
-      if (absolutePath === entryPath) continue;
-      if (entry.name.endsWith(".md") || entry.name.endsWith(".mdx")) continue;
-
-      const relativePath = path.relative(sourceDir, absolutePath);
-      const destinationPath = path.join(targetDir, relativePath);
-      ensureDirectory(path.dirname(destinationPath));
-      fs.copyFileSync(absolutePath, destinationPath);
-      ensureFileMode(destinationPath);
-      copied += 1;
+    if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+      throw new Error(
+        `[sync-posts] Missing referenced asset ${relativePath} from ${sourceDir}`,
+      );
     }
-  }
 
-  if (fs.existsSync(sourceDir)) {
-    walk(sourceDir);
+    const destinationPath = path.join(targetDir, toSafeAssetPath(pathname));
+    if (copiedDestinations.has(destinationPath)) {
+      continue;
+    }
+
+    copiedDestinations.add(destinationPath);
+    ensureDirectory(path.dirname(destinationPath));
+    fs.copyFileSync(absolutePath, destinationPath);
+    ensureFileMode(destinationPath);
+    copied += 1;
   }
 
   return copied;
@@ -550,7 +588,14 @@ for (const post of posts) {
   const outputPath = path.join(OUTPUT_DIR, `${slug}.md`);
   fs.writeFileSync(outputPath, output, "utf-8");
   ensureFileMode(outputPath);
-  assetCount += copyPostAssets(post.sourceDir, slug, post.entryPath);
+  assetCount += copyReferencedAssets(
+    post.sourceDir,
+    slug,
+    new Set([
+      ...collectMarkdownAssetPaths(content),
+      ...collectFrontmatterAssetPaths(data),
+    ]),
+  );
   count += 1;
 }
 
