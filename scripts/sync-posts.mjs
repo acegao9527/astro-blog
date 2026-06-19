@@ -1,12 +1,15 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { ROOT_DIR, getProjectConfig, requireConfigValue } from "./config.mjs";
+import {
+  ROOT_DIR,
+  getProjectConfig,
+  requireContentSourceConfig,
+} from "./config.mjs";
 
-const { blogDir: configuredBlogDir } = getProjectConfig();
-const BLOG_DIR = requireConfigValue(
-  "BLOG_DIR",
-  configuredBlogDir,
+const contentSource = requireContentSourceConfig(
+  getProjectConfig(),
   "content sync",
 );
 const OUTPUT_DIR = path.join(ROOT_DIR, ".cache", "content", "posts");
@@ -24,6 +27,102 @@ function resetOutputDir(dir) {
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(dir, { recursive: true, mode: DIRECTORY_MODE });
   fs.chmodSync(dir, DIRECTORY_MODE);
+}
+
+function runGit(args, options = {}) {
+  const result = spawnSync("git", args, {
+    cwd: options.cwd || ROOT_DIR,
+    encoding: "utf-8",
+  });
+
+  if (result.status === 0) {
+    return result.stdout.trim();
+  }
+
+  const output = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
+  throw new Error(
+    `[sync-posts] git ${args.join(" ")} failed${output ? `:\n${output}` : ""}`,
+  );
+}
+
+function tryRunGit(args, options = {}) {
+  try {
+    return { ok: true, stdout: runGit(args, options) };
+  } catch (error) {
+    return { ok: false, error };
+  }
+}
+
+function cloneBlogRepository(source) {
+  ensureDirectory(path.dirname(source.cacheDir));
+
+  const args = ["clone", "--depth=1"];
+  if (source.repoRef) {
+    args.push("--branch", source.repoRef, "--single-branch");
+  }
+  args.push(source.repoUrl, source.cacheDir);
+
+  console.log(`[sync-posts] Cloning blog repository ${source.repoUrl}`);
+  runGit(args);
+}
+
+function updateBlogRepository(source) {
+  const gitDir = path.join(source.cacheDir, ".git");
+
+  if (!fs.existsSync(gitDir)) {
+    fs.rmSync(source.cacheDir, { recursive: true, force: true });
+    cloneBlogRepository(source);
+    return;
+  }
+
+  const remoteUrl = runGit(["remote", "get-url", "origin"], {
+    cwd: source.cacheDir,
+  });
+
+  if (remoteUrl !== source.repoUrl) {
+    fs.rmSync(source.cacheDir, { recursive: true, force: true });
+    cloneBlogRepository(source);
+    return;
+  }
+
+  runGit(["reset", "--hard"], { cwd: source.cacheDir });
+  runGit(["clean", "-fdx"], { cwd: source.cacheDir });
+
+  if (source.repoRef) {
+    console.log(
+      `[sync-posts] Fetching blog repository ${source.repoUrl} (${source.repoRef})`,
+    );
+    runGit(["fetch", "--depth=1", "origin", source.repoRef], {
+      cwd: source.cacheDir,
+    });
+    runGit(["checkout", "--detach", "FETCH_HEAD"], { cwd: source.cacheDir });
+    runGit(["reset", "--hard", "FETCH_HEAD"], { cwd: source.cacheDir });
+    return;
+  }
+
+  console.log(`[sync-posts] Pulling blog repository ${source.repoUrl}`);
+  const branch = runGit(["branch", "--show-current"], { cwd: source.cacheDir });
+  if (!branch) {
+    fs.rmSync(source.cacheDir, { recursive: true, force: true });
+    cloneBlogRepository(source);
+    return;
+  }
+
+  const pullResult = tryRunGit(["pull", "--ff-only"], { cwd: source.cacheDir });
+  if (!pullResult.ok) {
+    console.warn("[sync-posts] Pull failed; recloning cached blog repository.");
+    fs.rmSync(source.cacheDir, { recursive: true, force: true });
+    cloneBlogRepository(source);
+  }
+}
+
+function resolveBlogDir(source) {
+  if (source.kind === "directory") {
+    return source.blogDir;
+  }
+
+  updateBlogRepository(source);
+  return source.cacheDir;
 }
 
 function ensureFileMode(filePath) {
@@ -374,6 +473,8 @@ function copyPostAssets(sourceDir, slug, entryPath) {
 
   return copied;
 }
+
+const BLOG_DIR = resolveBlogDir(contentSource);
 
 if (!fs.existsSync(BLOG_DIR)) {
   console.error(`[sync-posts] Blog directory not found: ${BLOG_DIR}`);

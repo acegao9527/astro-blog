@@ -4,8 +4,8 @@
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                        数据源 (本地 Markdown)                    │
-│  BLOG_DIR=<absolute path>                                       │
+│                    数据源 (Git 仓库或本地 Markdown)              │
+│  BLOG_REPO_URL=<git url> 或 BLOG_DIR=<absolute path>             │
 │  └── <slug>/index.md + assets                                   │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -57,7 +57,8 @@
 
 ### 内容系统
 
-- 写作仍然在本地 Markdown 中完成
+- 写作内容来自 `BLOG_REPO_URL` 指向的 Git 仓库，或回退到本地 `BLOG_DIR`
+- Git 仓库内容会先缓存到 `.cache/source/blog`
 - 构建前同步到 `.cache/content/posts`
 - 文章素材构建前同步到 `public/uploads/posts`
 - Astro collection schema 负责字段校验
@@ -74,6 +75,8 @@
 
 ### 环境变量
 
-- `BLOG_DIR`：覆盖本地 Markdown 目录
+- `BLOG_REPO_URL`：Markdown 源仓库地址，优先于 `BLOG_DIR`
+- `BLOG_REPO_REF`：可选，指定分支或 tag
+- `BLOG_DIR`：本地 Markdown 目录回退来源
 - `SITE_URL`：设置站点绝对地址，用于 canonical、RSS 和 sitemap
-- 两者都可以写在仓库根目录 `.env` 中，缺失时构建会直接失败
+- 内容源和 `SITE_URL` 都可以写在仓库根目录 `.env` 中，缺失时构建会直接失败

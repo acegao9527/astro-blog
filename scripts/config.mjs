@@ -71,9 +71,45 @@ function readConfigValue(key) {
 export function getProjectConfig() {
   return {
     rootDir: ROOT_DIR,
+    blogRepoUrl: readConfigValue("BLOG_REPO_URL"),
+    blogRepoRef: readConfigValue("BLOG_REPO_REF"),
     blogDir: readConfigValue("BLOG_DIR"),
     siteUrl: readConfigValue("SITE_URL"),
   };
+}
+
+export function getContentSourceConfig(config = getProjectConfig()) {
+  if (config.blogRepoUrl) {
+    return {
+      kind: "repo",
+      repoUrl: config.blogRepoUrl,
+      repoRef: config.blogRepoRef,
+      cacheDir: path.join(ROOT_DIR, ".cache", "source", "blog"),
+    };
+  }
+
+  if (config.blogDir) {
+    return {
+      kind: "directory",
+      blogDir: config.blogDir,
+    };
+  }
+
+  return null;
+}
+
+export function requireContentSourceConfig(config, context) {
+  const source = getContentSourceConfig(config);
+  if (source) {
+    return source;
+  }
+
+  throw new Error(
+    `[config] Missing content source for ${context}. Set BLOG_REPO_URL or BLOG_DIR in the shell environment or in ${path.relative(
+      ROOT_DIR,
+      ENV_FILE,
+    )}.`,
+  );
 }
 
 export function requireConfigValue(key, value, context) {

@@ -1,6 +1,6 @@
 # Astro 博客项目
 
-这是一个基于 Astro 6 的静态个人博客。文章依然来自本地 Markdown，但在构建前会先同步到根目录的 `.cache/content/posts`，文章素材会同步到 `public/uploads/posts`，再由 Astro content collections 统一校验、渲染和生成页面。
+这是一个基于 Astro 6 的静态个人博客。文章来自 Git 仓库或本地 Markdown 目录，构建前会先同步到根目录的 `.cache/content/posts`，文章素材会同步到 `public/uploads/posts`，再由 Astro content collections 统一校验、渲染和生成页面。
 
 ## 已完成的优化
 
@@ -14,9 +14,11 @@
 
 ## 内容来源
 
-项目不再内置任何机器相关的默认路径。运行前需要显式提供：
+项目不再内置任何机器相关的默认路径。运行前需要显式提供内容源和站点地址：
 
-- `BLOG_DIR`：本地 Markdown 源目录的绝对路径
+- `BLOG_REPO_URL`：Markdown 源仓库地址，设置后优先使用
+- `BLOG_REPO_REF`：可选，指定分支或 tag；不设置时使用仓库默认分支
+- `BLOG_DIR`：可选，本地 Markdown 源目录的绝对路径；仅在未设置 `BLOG_REPO_URL` 时使用
 - `SITE_URL`：线上站点绝对地址，用于 canonical、RSS、sitemap 和分享元信息
 
 推荐先复制一份环境变量文件：
@@ -28,14 +30,14 @@ cp .env.example .env
 然后在 `.env` 中填写真实值：
 
 ```bash
-BLOG_DIR="/absolute/path/to/your/blog"
+BLOG_REPO_URL="git@github.com:acegao9527/blog.git"
 SITE_URL="https://your-blog.com"
 ```
 
 也可以在命令前临时覆盖：
 
 ```bash
-BLOG_DIR="/your/blog/dir" npm run dev
+BLOG_REPO_URL="git@github.com:acegao9527/blog.git" npm run dev
 ```
 
 ```bash
@@ -45,7 +47,8 @@ SITE_URL="https://your-blog.com" npm run build
 说明：
 
 - `npm run sync:posts` 和 `npm run build` 都会校验必需配置
-- 缺少 `BLOG_DIR` 或 `SITE_URL` 时会直接失败，不再回退到隐式默认值
+- 缺少内容源或 `SITE_URL` 时会直接失败，不再回退到隐式默认值
+- 使用 `BLOG_REPO_URL` 时，仓库会缓存到 `.cache/source/blog`
 - shell 环境变量优先级高于 `.env`
 
 ## 数据源结构
@@ -53,7 +56,7 @@ SITE_URL="https://your-blog.com" npm run build
 推荐的源目录结构：
 
 ```text
-BLOG_DIR/
+BLOG_REPO_URL 或 BLOG_DIR 指向的根目录/
   hermes-vs-openclaw/
     index.md
     cover.webp
@@ -102,7 +105,7 @@ cover: ./cover.webp
 | 命令 | 说明 |
 | :--- | :--- |
 | `npm install` | 安装依赖 |
-| `npm run sync:posts` | 手动同步本地 Markdown 到 `.cache/content/posts` |
+| `npm run sync:posts` | 手动同步 Markdown 内容源到 `.cache/content/posts` |
 | `npm run dev` | 先同步文章，再启动本地开发服务器 |
 | `npm run build` | 先同步文章，再构建生产站点到 `./dist/` |
 | `npm run preview` | 本地预览构建结果 |
@@ -159,7 +162,7 @@ npm run deploy
 
 部署前确保：
 
-- `.env` 或 shell 环境里已经提供 `BLOG_DIR` 和 `SITE_URL`
+- `.env` 或 shell 环境里已经提供 `BLOG_REPO_URL` 或 `BLOG_DIR`，并提供 `SITE_URL`
 - `SITE_URL` 已设置为线上域名
 - 服务器静态目录与 `package.json` 中的 `deploy` 脚本一致
 - 本地 SSH 配置已可直接连接 `ta`
