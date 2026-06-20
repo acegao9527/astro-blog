@@ -158,6 +158,6 @@ cover: ./cover.webp
 blog push -> ta Hermes cron -> local build and deploy
 ```
 
-GitHub Actions 已退出常规部署链路。ta 服务器上的 Hermes cron job `astro-blog deploy watcher` 每 5 分钟主动拉取 `astro-blog` 和 `blog` 两个仓库的增量，在服务器本地构建，再把 `dist/` 同步到 `/home/ubuntu/nginx-blog/html/`。无变化时 Hermes 不唤醒 agent；有新部署或失败时会发飞书通知。
+GitHub Actions 已退出常规部署链路。ta 服务器上的 Hermes cron job `astro-blog deploy watcher` 每 5 分钟主动拉取 `astro-blog` 和 `blog` 两个仓库的增量，在服务器本地构建，再把 `dist/` 同步到 `/home/ubuntu/nginx-blog/html/`。无变化、源码变更但文章集合不变、或仅编辑已有文章时，Hermes 不唤醒 agent；新增/删除文章或部署失败时会发飞书通知。
 
 部署运维说明见 `docs/pull-deploy.md`。
