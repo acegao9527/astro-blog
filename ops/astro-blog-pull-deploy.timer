@@ -1,5 +1,5 @@
 [Unit]
-Description=Check for astro-blog deploy artifacts every minute
+Description=Check for astro-blog source updates every minute
 
 [Timer]
 OnBootSec=2min

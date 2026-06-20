@@ -1,5 +1,5 @@
 [Unit]
-Description=Pull and deploy the latest astro-blog artifact
+Description=Pull source, build, and deploy astro-blog
 Wants=network-online.target
 After=network-online.target
 
