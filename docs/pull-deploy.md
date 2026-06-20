@@ -8,7 +8,7 @@ The production deploy path no longer lets GitHub-hosted runners SSH into the ta 
 blog push
   -> repository_dispatch
   -> astro-blog GitHub Actions build validation
-  -> ta systemd timer fetches astro-blog and blog source repos
+  -> ta Hermes cron fetches astro-blog and blog source repos
   -> ta builds Astro locally
   -> rsync release into /home/ubuntu/nginx-blog/html/
 ```
@@ -18,7 +18,8 @@ blog push
 - `/usr/local/bin/astro-blog-pull-deploy`
 - `/home/ubuntu/astro-blog-src/.env`
 - `/etc/systemd/system/astro-blog-pull-deploy.service`
-- `/etc/systemd/system/astro-blog-pull-deploy.timer`
+- `/home/ubuntu/.hermes/scripts/astro_blog_deploy_check.py`
+- `/home/ubuntu/.hermes/cron/jobs.json`
 - `/home/ubuntu/astro-blog-src`
 - `/home/ubuntu/blog-src`
 - `/home/ubuntu/nginx-blog/releases`
@@ -30,16 +31,18 @@ Use `.env.example` as the source of truth for the server environment variables. 
 
 ## Operations
 
-Check the timer:
+Check the Hermes cron job:
 
 ```bash
-systemctl status astro-blog-pull-deploy.timer
+hermes cron list
+hermes cron status
 ```
 
 Run one deployment immediately:
 
 ```bash
-sudo systemctl start astro-blog-pull-deploy.service
+hermes cron run b8c998d627b1
+hermes cron tick
 ```
 
 Read logs:
@@ -48,4 +51,6 @@ Read logs:
 journalctl -u astro-blog-pull-deploy.service -n 100 --no-pager
 ```
 
-The service is idempotent. If the latest `deploy-artifacts` commit is already deployed, it only runs the healthcheck.
+The service is idempotent. If the latest `astro-blog` and `blog` commits are already deployed, it only runs the healthcheck.
+
+The Hermes cron job is named `astro-blog deploy watcher`. Its pre-run script uses Hermes' wake-gate convention: no-change runs end with `{"wakeAgent": false}`, so Hermes skips the agent and sends no notification. A successful new deployment or a failure wakes Hermes and delivers a Feishu notification.
