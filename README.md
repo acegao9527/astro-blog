@@ -18,7 +18,7 @@
 
 - `BLOG_REPO_URL`：Markdown 源仓库地址，设置后优先使用
 - `BLOG_REPO_REF`：可选，指定分支或 tag；不设置时使用仓库默认分支
-- `BLOG_REPO_SHA`：可选，指定需要构建的精确 commit；GitHub Actions 会用 blog 通知里的 commit SHA
+- `BLOG_REPO_SHA`：可选，指定需要构建的精确 commit；ta 服务器部署脚本会用它锁定 blog 源码版本
 - `BLOG_DIR`：可选，本地 Markdown 源目录的绝对路径；仅在未设置 `BLOG_REPO_URL` 时使用
 - `SITE_URL`：线上站点绝对地址，用于 canonical、RSS、sitemap 和分享元信息
 
@@ -155,9 +155,9 @@ cover: ./cover.webp
 常规部署链路：
 
 ```text
-blog push -> repository_dispatch -> astro-blog GitHub Actions build validation -> ta Hermes cron -> local build and deploy
+blog push -> ta Hermes cron -> local build and deploy
 ```
 
-GitHub Actions 不再 SSH 登录 ta 服务器。它只负责验证最新内容能成功构建。ta 服务器上的 Hermes cron job `astro-blog deploy watcher` 每分钟主动拉取 `astro-blog` 和 `blog` 两个仓库的增量，在服务器本地构建，再把 `dist/` 同步到 `/home/ubuntu/nginx-blog/html/`。无变化时 Hermes 不唤醒 agent；有新部署或失败时会发飞书通知。
+GitHub Actions 已退出常规部署链路。ta 服务器上的 Hermes cron job `astro-blog deploy watcher` 每 5 分钟主动拉取 `astro-blog` 和 `blog` 两个仓库的增量，在服务器本地构建，再把 `dist/` 同步到 `/home/ubuntu/nginx-blog/html/`。无变化时 Hermes 不唤醒 agent；有新部署或失败时会发飞书通知。
 
 部署运维说明见 `docs/pull-deploy.md`。

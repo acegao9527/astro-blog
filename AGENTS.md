@@ -9,7 +9,7 @@
 ## 项目规则
 
 - 每次代码或内容变更后，都必须运行 `npm run build`。
-- 常规发布不再从 GitHub Actions 或本机 SSH 登录服务器；GitHub Actions 只验证构建，ta 服务器上的 Hermes cron job 主动拉取源码、在本地构建、部署并通知结果。
+- 常规发布不再使用 GitHub Actions 或本机 SSH 登录服务器；ta 服务器上的 Hermes cron job 主动拉取源码、在本地构建、部署并通知结果。
 - 构建成功后，除非用户明确要求不要这样做，否则必须立即提交并推送本次相关仓库变更。
 - 以已部署的博客网址作为主要验收界面。目标是每次改动完成后，都能通过 ta 服务器 Hermes cron job 在在线站点看到最新结果。
 

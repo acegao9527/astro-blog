@@ -1,13 +1,11 @@
 # Pull Deploy
 
-The production deploy path no longer lets GitHub-hosted runners SSH into the ta server.
+The production deploy path no longer uses GitHub Actions or lets GitHub-hosted runners SSH into the ta server.
 
 ## Flow
 
 ```text
 blog push
-  -> repository_dispatch
-  -> astro-blog GitHub Actions build validation
   -> ta Hermes cron fetches astro-blog and blog source repos
   -> ta builds Astro locally
   -> rsync release into /home/ubuntu/nginx-blog/html/
@@ -25,7 +23,7 @@ blog push
 - `/home/ubuntu/nginx-blog/releases`
 - `/home/ubuntu/nginx-blog/.deployed-source-state`
 
-The ta server uses read-only GitHub deploy keys over `ssh.github.com:443` for both private repositories. GitHub-hosted runners no longer SSH into ta.
+The ta server uses read-only GitHub deploy keys over `ssh.github.com:443` for both private repositories. GitHub Actions is disabled for this deploy path.
 
 Use `.env.example` as the source of truth for the server environment variables. The production `.env` should live beside the checked-out Astro project at `/home/ubuntu/astro-blog-src/.env`, not under `/etc`.
 
