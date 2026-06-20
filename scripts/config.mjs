@@ -71,6 +71,7 @@ function readConfigValue(key) {
 export function getProjectConfig() {
   return {
     rootDir: ROOT_DIR,
+    blogSource: readConfigValue("BLOG_SOURCE")?.toLowerCase(),
     blogRepoUrl: readConfigValue("BLOG_REPO_URL"),
     blogRepoRef: readConfigValue("BLOG_REPO_REF"),
     blogRepoSha: readConfigValue("BLOG_REPO_SHA"),
@@ -79,23 +80,42 @@ export function getProjectConfig() {
   };
 }
 
+function getRepositorySource(config) {
+  if (!config.blogRepoUrl) return null;
+
+  return {
+    kind: "repo",
+    repoUrl: config.blogRepoUrl,
+    repoRef: config.blogRepoRef,
+    repoSha: config.blogRepoSha,
+    cacheDir: path.join(ROOT_DIR, ".cache", "source", "blog"),
+  };
+}
+
+function getDirectorySource(config) {
+  if (!config.blogDir) return null;
+
+  return {
+    kind: "directory",
+    blogDir: config.blogDir,
+  };
+}
+
 export function getContentSourceConfig(config = getProjectConfig()) {
-  if (config.blogRepoUrl) {
-    return {
-      kind: "repo",
-      repoUrl: config.blogRepoUrl,
-      repoRef: config.blogRepoRef,
-      repoSha: config.blogRepoSha,
-      cacheDir: path.join(ROOT_DIR, ".cache", "source", "blog"),
-    };
+  if (config.blogSource) {
+    if (config.blogSource === "repo") return getRepositorySource(config);
+    if (config.blogSource === "directory") return getDirectorySource(config);
+
+    throw new Error(
+      `[config] Unsupported BLOG_SOURCE: ${config.blogSource}. Use "repo" or "directory".`,
+    );
   }
 
-  if (config.blogDir) {
-    return {
-      kind: "directory",
-      blogDir: config.blogDir,
-    };
-  }
+  const repositorySource = getRepositorySource(config);
+  if (repositorySource) return repositorySource;
+
+  const directorySource = getDirectorySource(config);
+  if (directorySource) return directorySource;
 
   return null;
 }

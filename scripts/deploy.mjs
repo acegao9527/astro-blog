@@ -4,9 +4,12 @@ import os from "node:os";
 const DEFAULT_TARGET = "ta:/home/ubuntu/nginx-blog/html/";
 const DEFAULT_DEPLOY_PATH = "/home/ubuntu/nginx-blog/html/";
 
-if (process.env.DEPLOY_ENABLE_LEGACY_SSH !== "1") {
+if (
+  process.env.DEPLOY_ENABLE_DIRECT !== "1" &&
+  process.env.DEPLOY_ENABLE_LEGACY_SSH !== "1"
+) {
   console.error(
-    "[deploy] Direct SSH deploy is disabled. GitHub Actions now publishes the deploy-artifacts branch, and the ta server pull-deploy timer deploys it locally. Set DEPLOY_ENABLE_LEGACY_SSH=1 only for an emergency legacy SSH deploy.",
+    "[deploy] Direct SSH deploy requires explicit confirmation. Set DEPLOY_ENABLE_DIRECT=1 for the manual website publish flow.",
   );
   process.exit(2);
 }

@@ -19,7 +19,8 @@
 - `BLOG_REPO_URL`：Markdown 源仓库地址，设置后优先使用
 - `BLOG_REPO_REF`：可选，指定分支或 tag；不设置时使用仓库默认分支
 - `BLOG_REPO_SHA`：可选，指定需要构建的精确 commit；ta 服务器部署脚本会用它锁定 blog 源码版本
-- `BLOG_DIR`：可选，本地 Markdown 源目录的绝对路径；仅在未设置 `BLOG_REPO_URL` 时使用
+- `BLOG_DIR`：可选，本地 Markdown 源目录的绝对路径；默认仅在未设置 `BLOG_REPO_URL` 时使用
+- `BLOG_SOURCE`：可选，设为 `directory` 时强制使用 `BLOG_DIR`，即使 `.env` 里同时存在 `BLOG_REPO_URL`
 - `SITE_URL`：线上站点绝对地址，用于 canonical、RSS、sitemap 和分享元信息
 
 推荐先复制一份环境变量文件：
@@ -35,14 +36,16 @@ BLOG_REPO_URL="git@github.com:acegao9527/blog.git"
 SITE_URL="https://your-blog.com"
 ```
 
-也可以在命令前临时覆盖：
+本机发布前构建应显式使用本地 blog 内容源：
 
 ```bash
-BLOG_REPO_URL="git@github.com:acegao9527/blog.git" npm run dev
+BLOG_SOURCE=directory BLOG_DIR=/Users/acelee/workspace/blog SITE_URL="https://clawasync.com" npm run build
 ```
 
+也可以在命令前临时覆盖远端仓库源：
+
 ```bash
-SITE_URL="https://your-blog.com" npm run build
+BLOG_SOURCE=repo BLOG_REPO_URL="git@github.com:acegao9527/blog.git" npm run dev
 ```
 
 说明：
@@ -50,8 +53,9 @@ SITE_URL="https://your-blog.com" npm run build
 - `npm run sync:posts` 和 `npm run build` 都会校验必需配置
 - 缺少内容源或 `SITE_URL` 时会直接失败，不再回退到隐式默认值
 - 使用 `BLOG_REPO_URL` 时，仓库会缓存到 `.cache/source/blog`
+- 使用 `BLOG_SOURCE=directory` 时，会忽略 `.env` 中已有的 `BLOG_REPO_URL`
 - shell 环境变量优先级高于 `.env`
-- ta 服务器的 pull-deploy 变量也放在 `.env` 中，示例见 `.env.example` 的 `ASTRO_BLOG_*` 部分
+- 已停用的 ta pull-deploy 变量保留在 `.env.example` 的 `ASTRO_BLOG_*` 部分，仅用于手动救援旧链路
 
 ## 数据源结构
 
@@ -112,7 +116,7 @@ cover: ./cover.webp
 | `npm run build` | 先同步文章，再构建生产站点到 `./dist/` |
 | `npm run preview` | 本地预览构建结果 |
 | `npm run check` | 运行 Astro 类型检查 |
-| `npm run deploy` | 拒绝直连 SSH 部署，并提示使用 pull-deploy 链路 |
+| `npm run deploy` | 显式设置 `DEPLOY_ENABLE_DIRECT=1` 后，将 `./dist/` 直连同步到服务器 |
 | `npm run deploy:legacy-ssh` | 紧急情况下使用旧 SSH/rsync 方式部署 `./dist/` |
 
 ## 目录结构
@@ -155,9 +159,9 @@ cover: ./cover.webp
 常规部署链路：
 
 ```text
-blog push -> ta Hermes cron -> local build and deploy
+blog-website-publish skill -> local build from /Users/acelee/workspace/blog -> direct deploy
 ```
 
-GitHub Actions 已退出常规部署链路。ta 服务器上的 Hermes cron job `astro-blog deploy watcher` 每 5 分钟主动拉取 `astro-blog` 和 `blog` 两个仓库的增量，在服务器本地构建，再把 `dist/` 同步到 `/home/ubuntu/nginx-blog/html/`。无变化、源码变更但文章集合不变、或仅编辑已有文章时，Hermes 不唤醒 agent；新增/删除文章或部署失败时会发飞书通知。
+GitHub Actions 和 ta 服务器上的 Hermes cron job 已退出常规部署链路。发布网站文章时，由 blog 仓库的 `blog-website-publish` skill 将文章状态改为 `published`，使用 `BLOG_SOURCE=directory BLOG_DIR=/Users/acelee/workspace/blog` 在本机构建，再用 `DEPLOY_ENABLE_DIRECT=1 npm run deploy` 将 `dist/` 同步到 `/home/ubuntu/nginx-blog/html/`。
 
-部署运维说明见 `docs/pull-deploy.md`。
+旧 pull-deploy 运维说明见 `docs/pull-deploy.md`。

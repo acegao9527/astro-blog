@@ -58,6 +58,7 @@
 ### 内容系统
 
 - 写作内容来自 `BLOG_REPO_URL` 指向的 Git 仓库，或回退到本地 `BLOG_DIR`
+- 设置 `BLOG_SOURCE=directory` 时强制使用 `BLOG_DIR`，即使 `.env` 中存在 `BLOG_REPO_URL`
 - Git 仓库内容会先缓存到 `.cache/source/blog`
 - 构建前同步到 `.cache/content/posts`
 - 文章素材构建前同步到 `public/uploads/posts`
@@ -77,6 +78,7 @@
 
 - `BLOG_REPO_URL`：Markdown 源仓库地址，优先于 `BLOG_DIR`
 - `BLOG_REPO_REF`：可选，指定分支或 tag
+- `BLOG_SOURCE`：可选，`repo` 或 `directory`，用于显式选择内容源
 - `BLOG_DIR`：本地 Markdown 目录回退来源
 - `SITE_URL`：设置站点绝对地址，用于 canonical、RSS 和 sitemap
 - 内容源和 `SITE_URL` 都可以写在仓库根目录 `.env` 中，缺失时构建会直接失败

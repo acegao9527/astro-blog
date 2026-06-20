@@ -9,16 +9,16 @@
 ## 项目规则
 
 - 每次代码或内容变更后，都必须运行 `npm run build`。
-- 常规发布不再使用 GitHub Actions 或本机 SSH 登录服务器；ta 服务器上的 Hermes cron job 主动拉取源码、在本地构建、部署并通知结果。
+- 常规网站发布由 blog 仓库的 `blog-website-publish` skill 触发：本机 blog 内容源构建成功后，显式运行 `npm run deploy` 同步到服务器。
 - 构建成功后，除非用户明确要求不要这样做，否则必须立即提交并推送本次相关仓库变更。
-- 以已部署的博客网址作为主要验收界面。目标是每次改动完成后，都能通过 ta 服务器 Hermes cron job 在在线站点看到最新结果。
+- 以已部署的博客网址作为主要验收界面。目标是每次改动完成后，都能通过 direct deploy 在在线站点看到最新结果。
 
 ## 操作说明
 
 - 如果 `npm run build` 失败，先修复问题，再继续提交和推送。
-- 不要在常规流程里运行 `npm run deploy`；该命令会拒绝直连 SSH 部署。
-- 只有紧急回滚或手动救援时才允许使用 `npm run deploy:legacy-ssh`，并且必须明确说明原因。
-- 部署链路变更后，检查 ta 上的 Hermes cron job `astro-blog deploy watcher` 和 `astro-blog-pull-deploy.service` 状态。
+- 常规流程允许在构建成功后用 `DEPLOY_ENABLE_DIRECT=1 npm run deploy` 做显式直连部署。
+- 只有兼容旧流程时才使用 `npm run deploy:legacy-ssh`。
+- 部署链路变更后，确认 ta 上不再存在 Hermes cron job `astro-blog deploy watcher`。
 
 ## 项目标识
 
@@ -33,5 +33,5 @@
 项目锚点：
 
 - Repo：`/Users/acelee/workspace/astro-blog`
-- Blog Dir：`/Users/acelee/Library/Mobile Documents/iCloud~md~obsidian/Documents/ClawDoc/blog`
+- Blog Dir：`/Users/acelee/workspace/blog`
 - Site URL：`https://clawasync.com`

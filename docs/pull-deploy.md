@@ -1,6 +1,14 @@
 # Pull Deploy
 
-The production deploy path no longer uses GitHub Actions or lets GitHub-hosted runners SSH into the ta server.
+This server-side pull deploy path is retired for routine publishing. The current routine path is driven by the blog repository's `blog-website-publish` skill:
+
+```text
+blog-website-publish skill
+  -> local Astro build with BLOG_SOURCE=directory and BLOG_DIR=/Users/acelee/workspace/blog
+  -> DEPLOY_ENABLE_DIRECT=1 npm run deploy
+```
+
+Keep the notes below only for operating the old server-side pull-deploy script manually.
 
 ## Flow
 
