@@ -159,7 +159,7 @@ const tocPanelId = `article-toc-${post.data.slug}`;
     document.querySelectorAll('.article-toc a[href^="#"]'),
   );
   const closeButtons = Array.from(document.querySelectorAll("[data-toc-close]"));
-  const drawerViewport = window.matchMedia("(max-width: 1119px)");
+  const drawerViewport = window.matchMedia("(max-width: 1679px)");
 
   const setTocState = (nextState) => {
     if (!articleSection || !toggleButton) return;
