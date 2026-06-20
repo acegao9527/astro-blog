@@ -16,7 +16,7 @@ blog push
 ## Server Files
 
 - `/usr/local/bin/astro-blog-pull-deploy`
-- `/etc/astro-blog-pull-deploy.env`
+- `/home/ubuntu/astro-blog-src/.env`
 - `/etc/systemd/system/astro-blog-pull-deploy.service`
 - `/etc/systemd/system/astro-blog-pull-deploy.timer`
 - `/home/ubuntu/astro-blog-src`
@@ -25,6 +25,8 @@ blog push
 - `/home/ubuntu/nginx-blog/.deployed-source-state`
 
 The ta server uses read-only GitHub deploy keys over `ssh.github.com:443` for both private repositories. GitHub-hosted runners no longer SSH into ta.
+
+Use `.env.example` as the source of truth for the server environment variables. The production `.env` should live beside the checked-out Astro project at `/home/ubuntu/astro-blog-src/.env`, not under `/etc`.
 
 ## Operations
 

@@ -51,6 +51,7 @@ SITE_URL="https://your-blog.com" npm run build
 - 缺少内容源或 `SITE_URL` 时会直接失败，不再回退到隐式默认值
 - 使用 `BLOG_REPO_URL` 时，仓库会缓存到 `.cache/source/blog`
 - shell 环境变量优先级高于 `.env`
+- ta 服务器的 pull-deploy 变量也放在 `.env` 中，示例见 `.env.example` 的 `ASTRO_BLOG_*` 部分
 
 ## 数据源结构
 

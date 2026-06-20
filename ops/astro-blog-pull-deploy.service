@@ -7,6 +7,6 @@ After=network-online.target
 Type=oneshot
 User=ubuntu
 Group=ubuntu
-EnvironmentFile=-/etc/astro-blog-pull-deploy.env
+EnvironmentFile=-/home/ubuntu/astro-blog-src/.env
 ExecStart=/usr/local/bin/astro-blog-pull-deploy
 TimeoutStartSec=30min
