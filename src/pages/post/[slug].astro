@@ -39,67 +39,93 @@ const tocPanelId = `article-toc-${post.data.slug}`;
     data-toc-layout={tocHeadings.length > 0 ? "closed" : "none"}
   >
     <a class="back-link" href="/">← 返回首页</a>
-    <article class="article-shell">
-      <header class="article-header">
-        <div class="eyebrow">Article</div>
-        <h1>{post.data.title}</h1>
-        <div class="article-header__meta">
-          <time datetime={post.data.created.toISOString()}>{formatDate(post.data.created)}</time>
-          {post.data.modified.getTime() !== post.data.created.getTime() && (
-            <span>更新于 {formatDate(post.data.modified)}</span>
+    <div class="article-layout">
+      <article class="article-shell">
+        <header class="article-header">
+          <div class="eyebrow">Article</div>
+          <h1>{post.data.title}</h1>
+          <div class="article-header__meta">
+            <time datetime={post.data.created.toISOString()}>{formatDate(post.data.created)}</time>
+            {post.data.modified.getTime() !== post.data.created.getTime() && (
+              <span>更新于 {formatDate(post.data.modified)}</span>
+            )}
+            {headings.length > 0 && <span>{headings.length} 个章节</span>}
+          </div>
+          {tocHeadings.length > 0 && (
+            <button
+              class="article-toc-toggle"
+              type="button"
+              data-toc-toggle
+              aria-controls={tocPanelId}
+              aria-expanded="false"
+              aria-label="打开文章大纲"
+            >
+              <svg class="icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2v8"/>
+                <circle cx="12" cy="14" r="4"/>
+                <path d="M12 18v4"/>
+                <path d="M6 14h2"/>
+                <path d="M16 14h2"/>
+              </svg>
+              <span data-toc-toggle-text>大纲</span>
+            </button>
           )}
-          {headings.length > 0 && <span>{headings.length} 个章节</span>}
-        </div>
-        {tocHeadings.length > 0 && (
-        <button
-          class="article-toc-toggle"
-          type="button"
-          data-toc-toggle
-          aria-controls={tocPanelId}
-          aria-expanded="false"
-        >
-          <svg class="icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 2v8"/>
-            <circle cx="12" cy="14" r="4"/>
-            <path d="M12 18v4"/>
-            <path d="M6 14h2"/>
-            <path d="M16 14h2"/>
-          </svg>
-          <span data-toc-toggle-text>显示大纲</span>
-        </button>
-        )}
-        {post.data.tags.length > 0 && (
-          <div class="post-meta-tags" aria-label="文章标签">
-            {post.data.tags.map((tag) => (
-              <a class="tag" href={getTagHref(tag)}>
-                #{tag}
-              </a>
-            ))}
-          </div>
-        )}
-      </header>
-      <div class="article-content">
-        <Content />
-      </div>
-    </article>
-    {tocHeadings.length > 0 && (
-      <aside class="article-sidebar" id={tocPanelId} aria-label="文章大纲">
-        <div class="article-toc">
-          <div class="article-toc__header">
-            <span>太长不读</span>
-            <span>{tocHeadings.length} 节</span>
-          </div>
-          <nav aria-label="文章目录">
-            <ol class="article-toc__list">
-              {tocHeadings.map((heading) => (
-                <li class={`article-toc__item article-toc__item--depth-${heading.depth}`}>
-                  <a href={`#${heading.slug}`}>{heading.text}</a>
-                </li>
+          {post.data.tags.length > 0 && (
+            <div class="post-meta-tags" aria-label="文章标签">
+              {post.data.tags.map((tag) => (
+                <a class="tag" href={getTagHref(tag)}>
+                  #{tag}
+                </a>
               ))}
-            </ol>
-          </nav>
+            </div>
+          )}
+        </header>
+        <div class="article-content">
+          <Content />
         </div>
-      </aside>
+      </article>
+      {tocHeadings.length > 0 && (
+        <aside
+          class="article-sidebar"
+          id={tocPanelId}
+          aria-label="文章大纲"
+          aria-hidden="true"
+        >
+          <div class="article-toc">
+            <div class="article-toc__header">
+              <div class="article-toc__title">
+                <span>太长不读</span>
+                <span class="article-toc__count">{tocHeadings.length} 节</span>
+              </div>
+              <button
+                class="article-toc__close"
+                type="button"
+                data-toc-close
+                aria-label="关闭文章大纲"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <nav aria-label="文章目录">
+              <ol class="article-toc__list">
+                {tocHeadings.map((heading) => (
+                  <li class={`article-toc__item article-toc__item--depth-${heading.depth}`}>
+                    <a href={`#${heading.slug}`}>{heading.text}</a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          </div>
+        </aside>
+      )}
+    </div>
+    {tocHeadings.length > 0 && (
+      <button
+        class="article-toc-backdrop"
+        type="button"
+        data-toc-close
+        aria-label="关闭文章大纲"
+      ></button>
     )}
 
     <nav class="post-nav" aria-label="文章翻页">
@@ -128,9 +154,34 @@ const tocPanelId = `article-toc-${post.data.slug}`;
   const toggleText = document.querySelector("[data-toc-toggle-text]");
   const articleSection = document.querySelector(".article[data-toc-layout]");
   const articleShell = document.querySelector(".article-shell");
+  const tocPanel = document.querySelector(".article-sidebar");
   const tocLinks = Array.from(
     document.querySelectorAll('.article-toc a[href^="#"]'),
   );
+  const closeButtons = Array.from(document.querySelectorAll("[data-toc-close]"));
+  const drawerViewport = window.matchMedia("(max-width: 1119px)");
+
+  const setTocState = (nextState) => {
+    if (!articleSection || !toggleButton) return;
+
+    const isOpen = nextState === "open";
+    articleSection.dataset.tocLayout = nextState;
+    toggleButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    toggleButton.setAttribute(
+      "aria-label",
+      isOpen ? "关闭文章大纲" : "打开文章大纲",
+    );
+    if (tocPanel) {
+      tocPanel.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    }
+    if (toggleText) {
+      toggleText.textContent = isOpen ? "收起" : "大纲";
+    }
+    document.documentElement.classList.toggle(
+      "toc-drawer-open",
+      isOpen && drawerViewport.matches,
+    );
+  };
 
   const scrollHeadingIntoView = (headingId, updateHash = false) => {
     if (!headingId) return;
@@ -170,14 +221,21 @@ const tocPanelId = `article-toc-${post.data.slug}`;
     toggleButton.addEventListener("click", () => {
       const nextState =
         articleSection.dataset.tocLayout === "open" ? "closed" : "open";
-      articleSection.dataset.tocLayout = nextState;
-      toggleButton.setAttribute(
-        "aria-expanded",
-        nextState === "open" ? "true" : "false",
-      );
-      if (toggleText) {
-        toggleText.textContent = nextState === "open" ? "收起" : "显示大纲";
+      setTocState(nextState);
+    });
+
+    closeButtons.forEach((button) => {
+      button.addEventListener("click", () => setTocState("closed"));
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setTocState("closed");
       }
+    });
+
+    drawerViewport.addEventListener("change", () => {
+      setTocState(articleSection.dataset.tocLayout);
     });
   }
 
@@ -189,6 +247,9 @@ const tocPanelId = `article-toc-${post.data.slug}`;
 
       event.preventDefault();
       scrollHeadingIntoView(headingId, true);
+      if (drawerViewport.matches) {
+        setTocState("closed");
+      }
     });
   });
 
