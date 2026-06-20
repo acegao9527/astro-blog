@@ -533,6 +533,11 @@ let assetCount = 0;
 for (const post of posts) {
   const raw = fs.readFileSync(post.entryPath, "utf-8");
   const { data, content } = matter(raw);
+  const status = String(data.status ?? "published").trim().toLowerCase();
+
+  if (status === "draft") {
+    continue;
+  }
 
   const slug = String(data.slug || post.fallbackSlug).trim();
   if (!slug) {
