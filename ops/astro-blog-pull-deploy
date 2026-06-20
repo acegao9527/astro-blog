@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+log() {
+  printf '%s %s\n' "$(date -Is)" "$*"
+}
+
+APP_DIR="${ASTRO_BLOG_APP_DIR:-/home/ubuntu/nginx-blog}"
+REPO="${ASTRO_BLOG_REPO:-git@github.com:acegao9527/astro-blog.git}"
+BRANCH="${ASTRO_BLOG_BRANCH:-deploy-artifacts}"
+SOURCE_DIR="${ASTRO_BLOG_SOURCE_DIR:-${APP_DIR}/deploy-source}"
+RELEASES_DIR="${ASTRO_BLOG_RELEASES_DIR:-${APP_DIR}/releases}"
+HTML_DIR="${ASTRO_BLOG_HTML_DIR:-${APP_DIR}/html}"
+STATE_FILE="${ASTRO_BLOG_STATE_FILE:-${APP_DIR}/.deployed-artifact-commit}"
+LOCK_FILE="${ASTRO_BLOG_LOCK_FILE:-/tmp/astro-blog-pull-deploy.lock}"
+HEALTHCHECK_URL="${ASTRO_BLOG_HEALTHCHECK_URL:-https://clawasync.com/}"
+KEEP_RELEASES="${ASTRO_BLOG_KEEP_RELEASES:-5}"
+SSH_KEY="${ASTRO_BLOG_SSH_KEY:-/home/ubuntu/.ssh/astro_blog_deploy_key}"
+
+if [ -f "${SSH_KEY}" ]; then
+  export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+fi
+
+mkdir -p "${APP_DIR}" "${RELEASES_DIR}" "${HTML_DIR}"
+exec 9>"${LOCK_FILE}"
+if ! flock -n 9; then
+  log "another deployment is already running"
+  exit 0
+fi
+
+if [ ! -d "${SOURCE_DIR}/.git" ]; then
+  rm -rf "${SOURCE_DIR}"
+  log "cloning ${REPO} ${BRANCH}"
+  git clone --depth=1 --branch "${BRANCH}" "${REPO}" "${SOURCE_DIR}"
+else
+  log "fetching ${REPO} ${BRANCH}"
+  git -C "${SOURCE_DIR}" fetch --depth=1 origin "${BRANCH}"
+  git -C "${SOURCE_DIR}" checkout -B "${BRANCH}" FETCH_HEAD
+  git -C "${SOURCE_DIR}" reset --hard FETCH_HEAD
+  git -C "${SOURCE_DIR}" clean -fdx
+fi
+
+artifact_commit="$(git -C "${SOURCE_DIR}" rev-parse HEAD)"
+if [ -f "${STATE_FILE}" ] && [ "$(cat "${STATE_FILE}")" = "${artifact_commit}" ]; then
+  log "artifact ${artifact_commit} already deployed"
+  if [ -n "${HEALTHCHECK_URL}" ]; then
+    curl -fsS --max-time 20 --retry 2 "${HEALTHCHECK_URL}" >/dev/null
+    log "healthcheck ok: ${HEALTHCHECK_URL}"
+  fi
+  exit 0
+fi
+
+if [ ! -f "${SOURCE_DIR}/index.html" ]; then
+  log "missing index.html in deploy artifact"
+  exit 1
+fi
+
+if [ ! -f "${SOURCE_DIR}/.deploy-meta.json" ]; then
+  log "missing .deploy-meta.json in deploy artifact"
+  exit 1
+fi
+
+source_sha="$(sed -n 's/.*"source_sha"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${SOURCE_DIR}/.deploy-meta.json" | head -1)"
+release_name="${source_sha:-${artifact_commit}}"
+release_dir="${RELEASES_DIR}/${release_name}"
+
+mkdir -p "${release_dir}"
+rsync -a --delete --exclude='.git/' "${SOURCE_DIR}/" "${release_dir}/"
+rsync -a --delete --delete-delay "${release_dir}/" "${HTML_DIR}/"
+
+if [ -n "${HEALTHCHECK_URL}" ]; then
+  curl -fsS --max-time 20 --retry 2 "${HEALTHCHECK_URL}" >/dev/null
+  log "healthcheck ok: ${HEALTHCHECK_URL}"
+fi
+
+printf '%s\n' "${artifact_commit}" > "${STATE_FILE}.tmp"
+mv "${STATE_FILE}.tmp" "${STATE_FILE}"
+
+if [ "${KEEP_RELEASES}" -gt 0 ]; then
+  ls -1dt "${RELEASES_DIR}"/* 2>/dev/null | tail -n +"$((KEEP_RELEASES + 1))" | xargs -r rm -rf --
+fi
+
+log "deployed artifact ${artifact_commit} source ${source_sha:-unknown}"

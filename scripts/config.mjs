@@ -73,6 +73,7 @@ export function getProjectConfig() {
     rootDir: ROOT_DIR,
     blogRepoUrl: readConfigValue("BLOG_REPO_URL"),
     blogRepoRef: readConfigValue("BLOG_REPO_REF"),
+    blogRepoSha: readConfigValue("BLOG_REPO_SHA"),
     blogDir: readConfigValue("BLOG_DIR"),
     siteUrl: readConfigValue("SITE_URL"),
   };
@@ -84,6 +85,7 @@ export function getContentSourceConfig(config = getProjectConfig()) {
       kind: "repo",
       repoUrl: config.blogRepoUrl,
       repoRef: config.blogRepoRef,
+      repoSha: config.blogRepoSha,
       cacheDir: path.join(ROOT_DIR, ".cache", "source", "blog"),
     };
   }

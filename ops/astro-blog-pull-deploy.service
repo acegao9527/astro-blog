@@ -1,0 +1,11 @@
+[Unit]
+Description=Pull and deploy the latest astro-blog artifact
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+EnvironmentFile=-/etc/astro-blog-pull-deploy.env
+ExecStart=/usr/local/bin/astro-blog-pull-deploy

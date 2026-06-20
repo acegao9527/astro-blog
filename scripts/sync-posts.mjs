@@ -53,6 +53,32 @@ function tryRunGit(args, options = {}) {
   }
 }
 
+function checkoutBlogRepositorySha(source) {
+  if (!source.repoSha) return;
+
+  const currentSha = runGit(["rev-parse", "HEAD"], { cwd: source.cacheDir });
+  if (currentSha === source.repoSha) {
+    console.log(`[sync-posts] Using blog repository commit ${source.repoSha}`);
+    return;
+  }
+
+  console.log(`[sync-posts] Fetching blog repository commit ${source.repoSha}`);
+  const directFetch = tryRunGit(["fetch", "--depth=1", "origin", source.repoSha], {
+    cwd: source.cacheDir,
+  });
+
+  if (!directFetch.ok && source.repoRef) {
+    runGit(["fetch", "--depth=200", "origin", source.repoRef], {
+      cwd: source.cacheDir,
+    });
+  } else if (!directFetch.ok) {
+    throw directFetch.error;
+  }
+
+  runGit(["checkout", "--detach", source.repoSha], { cwd: source.cacheDir });
+  runGit(["reset", "--hard", source.repoSha], { cwd: source.cacheDir });
+}
+
 function cloneBlogRepository(source) {
   ensureDirectory(path.dirname(source.cacheDir));
 
@@ -64,6 +90,7 @@ function cloneBlogRepository(source) {
 
   console.log(`[sync-posts] Cloning blog repository ${source.repoUrl}`);
   runGit(args);
+  checkoutBlogRepositorySha(source);
 }
 
 function updateBlogRepository(source) {
@@ -97,6 +124,7 @@ function updateBlogRepository(source) {
     });
     runGit(["checkout", "--detach", "FETCH_HEAD"], { cwd: source.cacheDir });
     runGit(["reset", "--hard", "FETCH_HEAD"], { cwd: source.cacheDir });
+    checkoutBlogRepositorySha(source);
     return;
   }
 
@@ -114,6 +142,8 @@ function updateBlogRepository(source) {
     fs.rmSync(source.cacheDir, { recursive: true, force: true });
     cloneBlogRepository(source);
   }
+
+  checkoutBlogRepositorySha(source);
 }
 
 function resolveBlogDir(source) {

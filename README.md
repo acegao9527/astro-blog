@@ -18,6 +18,7 @@
 
 - `BLOG_REPO_URL`：Markdown 源仓库地址，设置后优先使用
 - `BLOG_REPO_REF`：可选，指定分支或 tag；不设置时使用仓库默认分支
+- `BLOG_REPO_SHA`：可选，指定需要构建的精确 commit；GitHub Actions 会用 blog 通知里的 commit SHA
 - `BLOG_DIR`：可选，本地 Markdown 源目录的绝对路径；仅在未设置 `BLOG_REPO_URL` 时使用
 - `SITE_URL`：线上站点绝对地址，用于 canonical、RSS、sitemap 和分享元信息
 
@@ -110,7 +111,8 @@ cover: ./cover.webp
 | `npm run build` | 先同步文章，再构建生产站点到 `./dist/` |
 | `npm run preview` | 本地预览构建结果 |
 | `npm run check` | 运行 Astro 类型检查 |
-| `npm run deploy` | 将 `./dist/` 部署到服务器 |
+| `npm run deploy` | 拒绝直连 SSH 部署，并提示使用 pull-deploy 链路 |
+| `npm run deploy:legacy-ssh` | 紧急情况下使用旧 SSH/rsync 方式部署 `./dist/` |
 
 ## 目录结构
 
@@ -149,20 +151,12 @@ cover: ./cover.webp
 
 ## 部署
 
-当前部署脚本：
+常规部署链路：
 
-```bash
-npm run deploy
+```text
+blog push -> repository_dispatch -> astro-blog GitHub Actions build -> deploy-artifacts branch -> ta pull-deploy timer
 ```
 
-实际同步目标：
+GitHub Actions 不再 SSH 登录 ta 服务器。它只负责构建站点，把 `dist/` 上传为短期 artifact，并强制更新 `deploy-artifacts` 分支。ta 服务器上的 `astro-blog-pull-deploy.timer` 每分钟主动拉取该分支，校验 `.deploy-meta.json` 和 `index.html`，再把最新构建同步到 `/home/ubuntu/nginx-blog/html/`。
 
-- SSH 别名：`ta`
-- 服务器路径：`/home/ubuntu/nginx-blog/html/`
-
-部署前确保：
-
-- `.env` 或 shell 环境里已经提供 `BLOG_REPO_URL` 或 `BLOG_DIR`，并提供 `SITE_URL`
-- `SITE_URL` 已设置为线上域名
-- 服务器静态目录与 `package.json` 中的 `deploy` 脚本一致
-- 本地 SSH 配置已可直接连接 `ta`
+部署运维说明见 `docs/pull-deploy.md`。

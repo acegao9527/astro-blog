@@ -1,4 +1,4 @@
-name: Deploy site
+name: Build site artifact
 
 on:
   push:
@@ -10,14 +10,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: deploy-site
+  group: build-site-artifact
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout site repository
@@ -29,25 +29,19 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Configure SSH
+      - name: Configure blog repository SSH
         env:
           BLOG_REPO_SSH_KEY: ${{ secrets.BLOG_REPO_SSH_KEY }}
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           set -eu
           if [ -z "${BLOG_REPO_SSH_KEY}" ]; then
             echo "::error::Missing BLOG_REPO_SSH_KEY secret"
             exit 1
           fi
-          if [ -z "${DEPLOY_SSH_KEY}" ]; then
-            echo "::error::Missing DEPLOY_SSH_KEY secret"
-            exit 1
-          fi
 
           install -m 700 -d ~/.ssh
           printf '%s\n' "${BLOG_REPO_SSH_KEY}" > ~/.ssh/blog_repo_key
-          printf '%s\n' "${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/blog_repo_key ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/blog_repo_key
 
           cat >> ~/.ssh/config <<'EOF'
           Host github.com
@@ -67,15 +61,52 @@ jobs:
       - name: Build site
         env:
           BLOG_REPO_URL: git@github.com:acegao9527/blog.git
-          BLOG_REPO_REF: ${{ vars.BLOG_REPO_REF }}
+          BLOG_REPO_REF: ${{ github.event.client_payload.source_ref || vars.BLOG_REPO_REF }}
+          BLOG_REPO_SHA: ${{ github.event.client_payload.source_sha || '' }}
           SITE_URL: https://clawasync.com
         run: npm run build
 
-      - name: Deploy site
+      - name: Write deploy metadata
         env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          DEPLOY_SSH_KEY_PATH: /home/runner/.ssh/deploy_key
-        run: npm run deploy
+          SOURCE_REPOSITORY: ${{ github.event.client_payload.source_repository || github.repository }}
+          SOURCE_REF: ${{ github.event.client_payload.source_ref || '' }}
+          SOURCE_SHA: ${{ github.event.client_payload.source_sha || '' }}
+        run: |
+          set -eu
+          cat > dist/.deploy-meta.json <<EOF
+          {
+            "repository": "${GITHUB_REPOSITORY}",
+            "site_sha": "${GITHUB_SHA}",
+            "source_repository": "${SOURCE_REPOSITORY}",
+            "source_ref": "${SOURCE_REF}",
+            "source_sha": "${SOURCE_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_attempt": "${GITHUB_RUN_ATTEMPT}",
+            "built_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: astro-blog-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish deploy artifact branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          publish_dir="$(mktemp -d)"
+          cp -a dist/. "${publish_dir}/"
+
+          git -C "${publish_dir}" init
+          git -C "${publish_dir}" config user.name "github-actions[bot]"
+          git -C "${publish_dir}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "${publish_dir}" checkout -b deploy-artifacts
+          git -C "${publish_dir}" add -A
+          git -C "${publish_dir}" commit -m "Deploy ${GITHUB_SHA}"
+          git -C "${publish_dir}" remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git -C "${publish_dir}" push --force origin deploy-artifacts

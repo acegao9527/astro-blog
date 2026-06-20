@@ -12,7 +12,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
-    "deploy": "node ./scripts/deploy.mjs"
+    "deploy": "node ./scripts/deploy.mjs",
+    "deploy:legacy-ssh": "DEPLOY_ENABLE_LEGACY_SSH=1 node ./scripts/deploy.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",
