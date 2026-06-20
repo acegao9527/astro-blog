@@ -9,7 +9,7 @@
 ## 项目规则
 
 - 每次代码或内容变更后，都必须运行 `npm run build`。
-- 常规发布不再从 GitHub Actions 或本机 SSH 登录服务器；GitHub Actions 只构建并发布 `deploy-artifacts` 分支，ta 服务器上的 `astro-blog-pull-deploy.timer` 主动拉取并部署。
+- 常规发布不再从 GitHub Actions 或本机 SSH 登录服务器；GitHub Actions 只验证构建，ta 服务器上的 `astro-blog-pull-deploy.timer` 主动拉取源码、在本地构建并部署。
 - 构建成功后，除非用户明确要求不要这样做，否则必须立即提交并推送本次相关仓库变更。
 - 以已部署的博客网址作为主要验收界面。目标是每次改动完成后，都能通过 ta 服务器定时任务在在线站点看到最新结果。
 

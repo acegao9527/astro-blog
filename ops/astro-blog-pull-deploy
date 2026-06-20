@@ -2,24 +2,73 @@
 set -euo pipefail
 
 log() {
-  printf '%s %s\n' "$(date -Is)" "$*"
+  printf '%s %s\n' "$(date -Is)" "$*" >&2
 }
 
 APP_DIR="${ASTRO_BLOG_APP_DIR:-/home/ubuntu/nginx-blog}"
-REPO="${ASTRO_BLOG_REPO:-git@github.com:acegao9527/astro-blog.git}"
-BRANCH="${ASTRO_BLOG_BRANCH:-deploy-artifacts}"
-SOURCE_DIR="${ASTRO_BLOG_SOURCE_DIR:-${APP_DIR}/deploy-source}"
+SITE_DIR="${ASTRO_BLOG_SITE_DIR:-/home/ubuntu/astro-blog-src}"
+CONTENT_DIR="${ASTRO_BLOG_CONTENT_DIR:-/home/ubuntu/blog-src}"
+SITE_REMOTE="${ASTRO_BLOG_SITE_REMOTE:-origin}"
+CONTENT_REMOTE="${ASTRO_BLOG_CONTENT_REMOTE:-origin}"
+SITE_BRANCH="${ASTRO_BLOG_SITE_BRANCH:-master}"
+CONTENT_BRANCH="${ASTRO_BLOG_CONTENT_BRANCH:-main}"
 RELEASES_DIR="${ASTRO_BLOG_RELEASES_DIR:-${APP_DIR}/releases}"
 HTML_DIR="${ASTRO_BLOG_HTML_DIR:-${APP_DIR}/html}"
-STATE_FILE="${ASTRO_BLOG_STATE_FILE:-${APP_DIR}/.deployed-artifact-commit}"
+STATE_FILE="${ASTRO_BLOG_STATE_FILE:-${APP_DIR}/.deployed-source-state}"
 LOCK_FILE="${ASTRO_BLOG_LOCK_FILE:-/tmp/astro-blog-pull-deploy.lock}"
+DEPS_STATE_FILE="${ASTRO_BLOG_DEPS_STATE_FILE:-${APP_DIR}/.node-deps-hash}"
+SITE_URL="${ASTRO_BLOG_SITE_URL:-https://clawasync.com}"
 HEALTHCHECK_URL="${ASTRO_BLOG_HEALTHCHECK_URL:-https://clawasync.com/}"
 KEEP_RELEASES="${ASTRO_BLOG_KEEP_RELEASES:-5}"
-SSH_KEY="${ASTRO_BLOG_SSH_KEY:-/home/ubuntu/.ssh/astro_blog_deploy_key}"
 
-if [ -f "${SSH_KEY}" ]; then
-  export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-fi
+healthcheck() {
+  if [ -n "${HEALTHCHECK_URL}" ]; then
+    curl -fsS --max-time 20 --retry 2 "${HEALTHCHECK_URL}" >/dev/null
+    log "healthcheck ok: ${HEALTHCHECK_URL}"
+  fi
+}
+
+update_repo() {
+  local dir="$1"
+  local remote="$2"
+  local branch="$3"
+  local label="$4"
+
+  if [ ! -d "${dir}/.git" ]; then
+    log "missing ${label} git repository: ${dir}"
+    exit 1
+  fi
+
+  log "fetching ${label} ${remote}/${branch}"
+  git -C "${dir}" fetch --prune "${remote}" "${branch}"
+  git -C "${dir}" checkout -q -B "${branch}" FETCH_HEAD
+  git -C "${dir}" reset --hard FETCH_HEAD >&2
+  git -C "${dir}" clean -fd >&2
+  git -C "${dir}" rev-parse HEAD
+}
+
+ensure_dependencies() {
+  local hash
+
+  if [ -f "${SITE_DIR}/package-lock.json" ]; then
+    hash="$(
+      cd "${SITE_DIR}"
+      sha256sum package.json package-lock.json | sha256sum | awk '{ print $1 }'
+    )"
+  else
+    hash="$(sha256sum "${SITE_DIR}/package.json" | awk '{ print $1 }')"
+  fi
+
+  if [ -d "${SITE_DIR}/node_modules" ] && [ -f "${DEPS_STATE_FILE}" ] && [ "$(cat "${DEPS_STATE_FILE}")" = "${hash}" ]; then
+    log "node dependencies already installed"
+    return
+  fi
+
+  log "installing node dependencies"
+  npm --prefix "${SITE_DIR}" ci
+  printf '%s\n' "${hash}" > "${DEPS_STATE_FILE}.tmp"
+  mv "${DEPS_STATE_FILE}.tmp" "${DEPS_STATE_FILE}"
+}
 
 mkdir -p "${APP_DIR}" "${RELEASES_DIR}" "${HTML_DIR}"
 exec 9>"${LOCK_FILE}"
@@ -28,56 +77,38 @@ if ! flock -n 9; then
   exit 0
 fi
 
-if [ ! -d "${SOURCE_DIR}/.git" ]; then
-  rm -rf "${SOURCE_DIR}"
-  log "cloning ${REPO} ${BRANCH}"
-  git clone --depth=1 --branch "${BRANCH}" "${REPO}" "${SOURCE_DIR}"
-else
-  log "fetching ${REPO} ${BRANCH}"
-  git -C "${SOURCE_DIR}" fetch --depth=1 origin "${BRANCH}"
-  git -C "${SOURCE_DIR}" checkout -B "${BRANCH}" FETCH_HEAD
-  git -C "${SOURCE_DIR}" reset --hard FETCH_HEAD
-  git -C "${SOURCE_DIR}" clean -fdx
-fi
+site_sha="$(update_repo "${SITE_DIR}" "${SITE_REMOTE}" "${SITE_BRANCH}" "astro-blog")"
+content_sha="$(update_repo "${CONTENT_DIR}" "${CONTENT_REMOTE}" "${CONTENT_BRANCH}" "blog")"
+state_value="${site_sha} ${content_sha}"
 
-artifact_commit="$(git -C "${SOURCE_DIR}" rev-parse HEAD)"
-if [ -f "${STATE_FILE}" ] && [ "$(cat "${STATE_FILE}")" = "${artifact_commit}" ]; then
-  log "artifact ${artifact_commit} already deployed"
-  if [ -n "${HEALTHCHECK_URL}" ]; then
-    curl -fsS --max-time 20 --retry 2 "${HEALTHCHECK_URL}" >/dev/null
-    log "healthcheck ok: ${HEALTHCHECK_URL}"
-  fi
+if [ -f "${STATE_FILE}" ] && [ "$(cat "${STATE_FILE}")" = "${state_value}" ]; then
+  log "source state already deployed: ${state_value}"
+  healthcheck
   exit 0
 fi
 
-if [ ! -f "${SOURCE_DIR}/index.html" ]; then
-  log "missing index.html in deploy artifact"
+ensure_dependencies
+
+log "building site from ${CONTENT_DIR}"
+BLOG_DIR="${CONTENT_DIR}" SITE_URL="${SITE_URL}" npm --prefix "${SITE_DIR}" run build
+
+if [ ! -f "${SITE_DIR}/dist/index.html" ]; then
+  log "missing built index.html"
   exit 1
 fi
 
-if [ ! -f "${SOURCE_DIR}/.deploy-meta.json" ]; then
-  log "missing .deploy-meta.json in deploy artifact"
-  exit 1
-fi
-
-source_sha="$(sed -n 's/.*"source_sha"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${SOURCE_DIR}/.deploy-meta.json" | head -1)"
-release_name="${source_sha:-${artifact_commit}}"
-release_dir="${RELEASES_DIR}/${release_name}"
-
+release_dir="${RELEASES_DIR}/${content_sha}-${site_sha:0:12}"
 mkdir -p "${release_dir}"
-rsync -a --delete --exclude='.git/' "${SOURCE_DIR}/" "${release_dir}/"
+rsync -a --delete "${SITE_DIR}/dist/" "${release_dir}/"
 rsync -a --delete --delete-delay "${release_dir}/" "${HTML_DIR}/"
 
-if [ -n "${HEALTHCHECK_URL}" ]; then
-  curl -fsS --max-time 20 --retry 2 "${HEALTHCHECK_URL}" >/dev/null
-  log "healthcheck ok: ${HEALTHCHECK_URL}"
-fi
+healthcheck
 
-printf '%s\n' "${artifact_commit}" > "${STATE_FILE}.tmp"
+printf '%s\n' "${state_value}" > "${STATE_FILE}.tmp"
 mv "${STATE_FILE}.tmp" "${STATE_FILE}"
 
 if [ "${KEEP_RELEASES}" -gt 0 ]; then
   ls -1dt "${RELEASES_DIR}"/* 2>/dev/null | tail -n +"$((KEEP_RELEASES + 1))" | xargs -r rm -rf --
 fi
 
-log "deployed artifact ${artifact_commit} source ${source_sha:-unknown}"
+log "deployed astro-blog ${site_sha} with blog ${content_sha}"

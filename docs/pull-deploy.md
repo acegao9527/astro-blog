@@ -7,10 +7,9 @@ The production deploy path no longer lets GitHub-hosted runners SSH into the ta 
 ```text
 blog push
   -> repository_dispatch
-  -> astro-blog GitHub Actions build
-  -> upload dist artifact
-  -> force-push deploy-artifacts branch
-  -> ta systemd timer pulls deploy-artifacts
+  -> astro-blog GitHub Actions build validation
+  -> ta systemd timer fetches astro-blog and blog source repos
+  -> ta builds Astro locally
   -> rsync release into /home/ubuntu/nginx-blog/html/
 ```
 
@@ -20,10 +19,12 @@ blog push
 - `/etc/astro-blog-pull-deploy.env`
 - `/etc/systemd/system/astro-blog-pull-deploy.service`
 - `/etc/systemd/system/astro-blog-pull-deploy.timer`
-- `/home/ubuntu/.ssh/astro_blog_deploy_key`
-- `/home/ubuntu/nginx-blog/deploy-source`
+- `/home/ubuntu/astro-blog-src`
+- `/home/ubuntu/blog-src`
 - `/home/ubuntu/nginx-blog/releases`
-- `/home/ubuntu/nginx-blog/.deployed-artifact-commit`
+- `/home/ubuntu/nginx-blog/.deployed-source-state`
+
+The ta server uses read-only GitHub deploy keys over `ssh.github.com:443` for both private repositories. GitHub-hosted runners no longer SSH into ta.
 
 ## Operations
 

@@ -1,4 +1,4 @@
-name: Build site artifact
+name: Build site
 
 on:
   push:
@@ -10,10 +10,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: build-site-artifact
+  group: build-site
   cancel-in-progress: true
 
 jobs:
@@ -65,48 +65,3 @@ jobs:
           BLOG_REPO_SHA: ${{ github.event.client_payload.source_sha || '' }}
           SITE_URL: https://clawasync.com
         run: npm run build
-
-      - name: Write deploy metadata
-        env:
-          SOURCE_REPOSITORY: ${{ github.event.client_payload.source_repository || github.repository }}
-          SOURCE_REF: ${{ github.event.client_payload.source_ref || '' }}
-          SOURCE_SHA: ${{ github.event.client_payload.source_sha || '' }}
-        run: |
-          set -eu
-          cat > dist/.deploy-meta.json <<EOF
-          {
-            "repository": "${GITHUB_REPOSITORY}",
-            "site_sha": "${GITHUB_SHA}",
-            "source_repository": "${SOURCE_REPOSITORY}",
-            "source_ref": "${SOURCE_REF}",
-            "source_sha": "${SOURCE_SHA}",
-            "run_id": "${GITHUB_RUN_ID}",
-            "run_attempt": "${GITHUB_RUN_ATTEMPT}",
-            "built_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          }
-          EOF
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: astro-blog-dist
-          path: dist/
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Publish deploy artifact branch
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -eu
-          publish_dir="$(mktemp -d)"
-          cp -a dist/. "${publish_dir}/"
-
-          git -C "${publish_dir}" init
-          git -C "${publish_dir}" config user.name "github-actions[bot]"
-          git -C "${publish_dir}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C "${publish_dir}" checkout -b deploy-artifacts
-          git -C "${publish_dir}" add -A
-          git -C "${publish_dir}" commit -m "Deploy ${GITHUB_SHA}"
-          git -C "${publish_dir}" remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git -C "${publish_dir}" push --force origin deploy-artifacts

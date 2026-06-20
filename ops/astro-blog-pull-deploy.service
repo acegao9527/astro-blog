@@ -9,3 +9,4 @@ User=ubuntu
 Group=ubuntu
 EnvironmentFile=-/etc/astro-blog-pull-deploy.env
 ExecStart=/usr/local/bin/astro-blog-pull-deploy
+TimeoutStartSec=30min
