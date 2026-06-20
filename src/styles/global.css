@@ -769,6 +769,22 @@ img {
     padding-right: 0.4rem;
   }
 
+  .article-sidebar {
+    top: calc(env(safe-area-inset-top, 0px) + 6rem);
+    right: 0.75rem;
+    bottom: auto;
+    left: 0.75rem;
+    width: auto;
+    max-height: min(72vh, calc(100vh - 7rem));
+    max-height: min(72dvh, calc(100dvh - 7rem));
+    overflow: visible;
+  }
+
+  .article-toc {
+    height: auto;
+    max-height: inherit;
+  }
+
   .archive-post {
     flex-direction: column;
     align-items: flex-start;
