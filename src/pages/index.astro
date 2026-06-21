@@ -17,13 +17,19 @@ const topTags = getTopTags(posts);
 ---
 
 <Layout
-  title="Ace Lee 的博客"
-  description="关于产品、技术、写作与个人系统的静态博客，使用 Astro content collections 构建。"
+  title="clawasync.com"
+  description="记录产品判断、技术实践、AI 工作流与日常写作。内容从本地 Markdown 出发，静态发布到网页。"
 >
   <section class="hero container">
-    <h1>思考、设计与创造</h1>
+    <div class="hero__identity">
+      <img class="hero__mark" src="/logo.png" alt="" width="112" height="108" />
+      <div>
+        <h1>clawasync.com</h1>
+        <p class="hero__topics">产品 · 技术 · AI 工作流 · 写作</p>
+      </div>
+    </div>
     <p class="hero__intro">
-      这里记录产品判断、技术实践、AI 工作流和日常写作。内容先在本地 Markdown 完成，再同步为标准 Astro 内容集合并静态发布。
+      记录产品判断、技术实践、AI 工作流与日常写作。内容从本地 Markdown 出发，静态发布到网页。
     </p>
     <div class="hero__actions">
       <a class="button" href="/archive/">查看归档</a>

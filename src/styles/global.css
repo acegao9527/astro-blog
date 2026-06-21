@@ -100,6 +100,7 @@ img {
   width: 2rem;
   height: 2rem;
   border-radius: 0.65rem;
+  object-fit: contain;
   box-shadow: 0 8px 22px rgba(31, 29, 26, 0.12);
 }
 
@@ -130,6 +131,21 @@ img {
   padding: 5.5rem 0 2rem;
 }
 
+.hero__identity {
+  display: flex;
+  align-items: center;
+  gap: 1.35rem;
+}
+
+.hero__mark {
+  width: clamp(4.5rem, 10vw, 7rem);
+  height: clamp(4.5rem, 10vw, 7rem);
+  flex: 0 0 auto;
+  border-radius: 1.75rem;
+  object-fit: contain;
+  box-shadow: 0 18px 44px rgba(31, 29, 26, 0.12);
+}
+
 .hero__badge,
 .eyebrow {
   display: inline-flex;
@@ -151,6 +167,18 @@ img {
   font-size: clamp(2.6rem, 5vw, 4.8rem);
   line-height: 1.05;
   letter-spacing: -0.04em;
+}
+
+.hero__identity h1 {
+  margin: 0;
+}
+
+.hero__topics {
+  margin: 0.7rem 0 0;
+  color: var(--accent-strong);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
 }
 
 .hero__intro,
@@ -761,6 +789,20 @@ img {
 @media (max-width: 640px) {
   .container {
     width: min(calc(100% - 1.25rem), var(--container));
+  }
+
+  .hero {
+    padding-top: 3.5rem;
+  }
+
+  .hero__identity {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .hero__topics {
+    letter-spacing: 0.08em;
   }
 
   .hero__intro,

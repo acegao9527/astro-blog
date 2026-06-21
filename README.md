@@ -124,8 +124,9 @@ cover: ./cover.webp
 ```text
 /
 ├── public/
-│   ├── favicon.svg
+│   ├── logo.png
 │   ├── favicon.ico
+│   ├── apple-touch-icon.png
 │   ├── uploads/
 │   │   └── posts/            # 同步生成的文章素材
 │   └── robots.txt
