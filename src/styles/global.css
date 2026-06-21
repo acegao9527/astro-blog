@@ -86,11 +86,21 @@ img {
 }
 
 .site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   font-size: 1.05rem;
   font-weight: 700;
   text-decoration: none;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.site-brand__mark {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.65rem;
+  box-shadow: 0 8px 22px rgba(31, 29, 26, 0.12);
 }
 
 .site-nav {
