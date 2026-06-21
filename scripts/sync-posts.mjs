@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import sharp from "sharp";
 import {
   ROOT_DIR,
   getProjectConfig,
@@ -17,6 +18,15 @@ const OUTPUT_ASSET_DIR = path.join(ROOT_DIR, "public", "uploads", "posts");
 const FRONTMATTER_ASSET_FIELDS = ["cover", "hero", "image", "ogImage"];
 const FILE_MODE = 0o644;
 const DIRECTORY_MODE = 0o755;
+const IMAGE_MAX_WIDTH = 1600;
+const IMAGE_WEBP_QUALITY = 82;
+const IMAGE_OUTPUT_EXTENSION = ".webp";
+const OPTIMIZABLE_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png"]);
+const imageOptimizationStats = {
+  optimized: 0,
+  originalBytes: 0,
+  outputBytes: 0,
+};
 
 function ensureDirectory(dir) {
   fs.mkdirSync(dir, { recursive: true, mode: DIRECTORY_MODE });
@@ -279,13 +289,35 @@ function isRelativeAssetPath(value) {
   return extension !== ".md" && extension !== ".mdx";
 }
 
-function toPublicAssetPath(slug, relativePath) {
-  const normalized = relativePath.replace(/^<|>$/g, "");
+function splitAssetPath(value) {
+  const normalized = String(value).replace(/^<|>$/g, "");
   const suffixIndex = normalized.search(/[?#]/);
-  const pathname =
-    suffixIndex === -1 ? normalized : normalized.slice(0, suffixIndex);
-  const suffix = suffixIndex === -1 ? "" : normalized.slice(suffixIndex);
-  const safePath = toSafeAssetPath(pathname);
+
+  return {
+    pathname: suffixIndex === -1 ? normalized : normalized.slice(0, suffixIndex),
+    suffix: suffixIndex === -1 ? "" : normalized.slice(suffixIndex),
+  };
+}
+
+function isOptimizableImagePath(pathname) {
+  return OPTIMIZABLE_IMAGE_EXTENSIONS.has(path.extname(pathname).toLowerCase());
+}
+
+function toOutputAssetPath(relativePath) {
+  const safePath = toSafeAssetPath(relativePath);
+
+  if (!isOptimizableImagePath(safePath)) {
+    return safePath;
+  }
+
+  return (
+    safePath.slice(0, -path.extname(safePath).length) + IMAGE_OUTPUT_EXTENSION
+  );
+}
+
+function toPublicAssetPath(slug, relativePath) {
+  const { pathname, suffix } = splitAssetPath(relativePath);
+  const safePath = toOutputAssetPath(pathname);
 
   return `/uploads/posts/${slug}/${safePath}${suffix}`;
 }
@@ -509,32 +541,70 @@ function listPostEntries(rootDir) {
   return posts.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "zh-CN"));
 }
 
-function copyReferencedAssets(sourceDir, slug, relativeAssetPaths) {
+function formatByteSize(bytes) {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+}
+
+async function writeOptimizedImage(sourcePath, destinationPath, originalBytes) {
+  try {
+    await sharp(sourcePath)
+      .rotate()
+      .resize({ width: IMAGE_MAX_WIDTH, withoutEnlargement: true })
+      .webp({ quality: IMAGE_WEBP_QUALITY })
+      .toFile(destinationPath);
+  } catch (error) {
+    throw new Error(
+      `[sync-posts] Failed to optimize image ${sourcePath}: ${error.message}`,
+    );
+  }
+
+  const outputBytes = fs.statSync(destinationPath).size;
+  imageOptimizationStats.optimized += 1;
+  imageOptimizationStats.originalBytes += originalBytes;
+  imageOptimizationStats.outputBytes += outputBytes;
+}
+
+async function copyReferencedAssets(sourceDir, slug, relativeAssetPaths) {
   const targetDir = path.join(OUTPUT_ASSET_DIR, slug);
   let copied = 0;
-  const copiedDestinations = new Set();
+  const copiedDestinations = new Map();
 
   for (const relativePath of relativeAssetPaths) {
-    const normalized = String(relativePath).replace(/^<|>$/g, "");
-    const suffixIndex = normalized.search(/[?#]/);
-    const pathname =
-      suffixIndex === -1 ? normalized : normalized.slice(0, suffixIndex);
+    const { pathname } = splitAssetPath(relativePath);
     const absolutePath = path.resolve(sourceDir, pathname);
+    const sourceStats = fs.existsSync(absolutePath)
+      ? fs.statSync(absolutePath)
+      : undefined;
 
-    if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+    if (!sourceStats?.isFile()) {
       throw new Error(
         `[sync-posts] Missing referenced asset ${relativePath} from ${sourceDir}`,
       );
     }
 
-    const destinationPath = path.join(targetDir, toSafeAssetPath(pathname));
-    if (copiedDestinations.has(destinationPath)) {
+    const destinationPath = path.join(targetDir, toOutputAssetPath(pathname));
+    const previousSource = copiedDestinations.get(destinationPath);
+    if (previousSource === absolutePath) {
       continue;
     }
 
-    copiedDestinations.add(destinationPath);
+    if (previousSource) {
+      throw new Error(
+        `[sync-posts] Asset output collision: ${absolutePath} and ${previousSource} both map to ${destinationPath}`,
+      );
+    }
+
+    copiedDestinations.set(destinationPath, absolutePath);
     ensureDirectory(path.dirname(destinationPath));
-    fs.copyFileSync(absolutePath, destinationPath);
+
+    if (isOptimizableImagePath(pathname)) {
+      await writeOptimizedImage(absolutePath, destinationPath, sourceStats.size);
+    } else {
+      fs.copyFileSync(absolutePath, destinationPath);
+    }
+
     ensureFileMode(destinationPath);
     copied += 1;
   }
@@ -623,7 +693,7 @@ for (const post of posts) {
   const outputPath = path.join(OUTPUT_DIR, `${slug}.md`);
   fs.writeFileSync(outputPath, output, "utf-8");
   ensureFileMode(outputPath);
-  assetCount += copyReferencedAssets(
+  assetCount += await copyReferencedAssets(
     post.sourceDir,
     slug,
     new Set([
@@ -637,3 +707,20 @@ for (const post of posts) {
 console.log(
   `[sync-posts] Synced ${count} post(s) and ${assetCount} asset(s) from ${BLOG_DIR}`,
 );
+
+if (imageOptimizationStats.optimized > 0) {
+  const savedBytes =
+    imageOptimizationStats.originalBytes - imageOptimizationStats.outputBytes;
+  const savedPercent =
+    imageOptimizationStats.originalBytes > 0
+      ? Math.round((savedBytes / imageOptimizationStats.originalBytes) * 100)
+      : 0;
+
+  console.log(
+    `[sync-posts] Optimized ${imageOptimizationStats.optimized} image(s) to WebP: ${formatByteSize(
+      imageOptimizationStats.originalBytes,
+    )} -> ${formatByteSize(
+      imageOptimizationStats.outputBytes,
+    )} (${savedPercent}% smaller)`,
+  );
+}
