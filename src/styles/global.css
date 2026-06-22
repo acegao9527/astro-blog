@@ -524,8 +524,11 @@ img {
 @media (min-width: 1680px) {
   .article-sidebar {
     position: fixed;
-    left: calc(50% + (var(--container) / 2) + 1.25rem);
-    width: min(300px, calc((100vw - var(--container)) / 2 - 2.25rem));
+    left: min(
+      calc(100vw - 320px),
+      calc(50% + (var(--container) / 2) + 1.25rem)
+    );
+    width: 300px;
     z-index: 8;
   }
 }
@@ -764,12 +767,28 @@ img {
   }
 
   .article-sidebar {
+    --article-sidebar-offset: clamp(
+      5rem,
+      var(--article-sidebar-top, 5rem),
+      calc(100vh - 8rem)
+    );
+    --article-sidebar-max-height: calc(
+      100vh - var(--article-sidebar-offset) - 1rem
+    );
+    --article-sidebar-offset: clamp(
+      5rem,
+      var(--article-sidebar-top, 5rem),
+      calc(100dvh - 8rem)
+    );
+    --article-sidebar-max-height: calc(
+      100dvh - var(--article-sidebar-offset) - 1rem
+    );
     position: fixed;
-    top: var(--article-sidebar-top, 5rem);
+    top: var(--article-sidebar-offset);
     right: 0.75rem;
     left: auto;
-    bottom: 1rem;
     width: min(320px, calc(100vw - 1.5rem));
+    max-height: var(--article-sidebar-max-height);
     z-index: 30;
   }
 
@@ -781,8 +800,7 @@ img {
   }
 
   .article-toc {
-    height: 100%;
-    max-height: none;
+    max-height: inherit;
   }
 
   .article[data-toc-layout="open"] .article-toc-backdrop {
