@@ -165,4 +165,4 @@ blog-website-publish skill -> local build from /Users/acelee/workspace/blog -> d
 
 GitHub Actions 和 ta 服务器上的 Hermes cron job 已退出常规部署链路。发布网站文章时，由 blog 仓库的 `blog-website-publish` skill 将文章状态改为 `published`，使用 `BLOG_SOURCE=directory BLOG_DIR=/Users/acelee/workspace/blog` 在本机构建，再用 `DEPLOY_ENABLE_DIRECT=1 npm run deploy` 将 `dist/` 同步到 `/home/ubuntu/nginx-blog/html/`。
 
-旧 pull-deploy 运维说明见 `docs/pull-deploy.md`。
+旧服务端拉取部署运维说明见 `docs/旧服务端拉取部署说明.md`。
