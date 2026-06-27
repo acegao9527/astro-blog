@@ -159,27 +159,31 @@ const tocPanelId = `article-toc-${post.data.slug}`;
     document.querySelectorAll('.article-toc a[href^="#"]'),
   );
   const closeButtons = Array.from(document.querySelectorAll("[data-toc-close]"));
-  const drawerViewport = window.matchMedia("(max-width: 1679px)");
+  const drawerViewport = window.matchMedia("(max-width: 1099px)");
 
   const setTocState = (nextState) => {
     if (!articleSection || !toggleButton) return;
 
     const isOpen = nextState === "open";
+    const isPinned = !drawerViewport.matches;
     articleSection.dataset.tocLayout = nextState;
-    toggleButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    toggleButton.setAttribute(
+      "aria-expanded",
+      isOpen || isPinned ? "true" : "false",
+    );
     toggleButton.setAttribute(
       "aria-label",
-      isOpen ? "关闭文章大纲" : "打开文章大纲",
+      isOpen || isPinned ? "关闭文章大纲" : "打开文章大纲",
     );
     if (tocPanel) {
-      tocPanel.setAttribute("aria-hidden", isOpen ? "false" : "true");
+      tocPanel.setAttribute("aria-hidden", isOpen || isPinned ? "false" : "true");
     }
     if (toggleText) {
       toggleText.textContent = isOpen ? "收起" : "大纲";
     }
     document.documentElement.classList.toggle(
       "toc-drawer-open",
-      isOpen && drawerViewport.matches,
+      isOpen && !isPinned,
     );
   };
 
@@ -237,6 +241,8 @@ const tocPanelId = `article-toc-${post.data.slug}`;
     drawerViewport.addEventListener("change", () => {
       setTocState(articleSection.dataset.tocLayout);
     });
+
+    setTocState(articleSection.dataset.tocLayout);
   }
 
   tocLinks.forEach((link) => {
