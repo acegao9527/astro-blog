@@ -24,7 +24,7 @@ const site = Astro.site;
 const canonical = site ? new URL(Astro.url.pathname, site).toString() : undefined;
 const fullTitle = title === siteName ? siteName : `${title} | ${siteName}`;
 const ogType = pageType === "article" ? "article" : "website";
-const iconVersion = "20260627";
+const iconVersion = "20260627-2";
 
 const jsonLd =
   pageType === "article"
@@ -64,10 +64,13 @@ const jsonLd =
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#f4efe6" />
+    <link rel="icon" type="image/svg+xml" href={`/favicon.svg?v=${iconVersion}`} />
+    <link rel="icon" type="image/png" sizes="16x16" href={`/favicon-16x16.png?v=${iconVersion}`} />
     <link rel="icon" type="image/png" sizes="32x32" href={`/favicon-32x32.png?v=${iconVersion}`} />
+    <link rel="icon" type="image/png" sizes="192x192" href={`/android-chrome-192x192.png?v=${iconVersion}`} />
     <link rel="shortcut icon" href={`/favicon.ico?v=${iconVersion}`} />
-    <link rel="icon" type="image/png" href={`/logo.png?v=${iconVersion}`} />
     <link rel="apple-touch-icon" href={`/apple-touch-icon.png?v=${iconVersion}`} />
+    <link rel="manifest" href={`/site.webmanifest?v=${iconVersion}`} />
     <link rel="alternate" type="application/rss+xml" title={siteName} href="/rss.xml" />
     {canonical && <link rel="canonical" href={canonical} />}
     <meta property="og:site_name" content={siteName} />
