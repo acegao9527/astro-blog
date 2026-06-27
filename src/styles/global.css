@@ -767,28 +767,12 @@ img {
   }
 
   .article-sidebar {
-    --article-sidebar-offset: clamp(
-      5rem,
-      var(--article-sidebar-top, 5rem),
-      calc(100vh - 8rem)
-    );
-    --article-sidebar-max-height: calc(
-      100vh - var(--article-sidebar-offset) - 1rem
-    );
-    --article-sidebar-offset: clamp(
-      5rem,
-      var(--article-sidebar-top, 5rem),
-      calc(100dvh - 8rem)
-    );
-    --article-sidebar-max-height: calc(
-      100dvh - var(--article-sidebar-offset) - 1rem
-    );
     position: fixed;
-    top: var(--article-sidebar-offset);
+    top: clamp(1rem, 8vh, 5rem);
     right: 0.75rem;
+    bottom: 1rem;
     left: auto;
-    width: min(320px, calc(100vw - 1.5rem));
-    max-height: var(--article-sidebar-max-height);
+    width: min(360px, calc(100vw - 1.5rem));
     z-index: 30;
   }
 
@@ -800,7 +784,8 @@ img {
   }
 
   .article-toc {
-    max-height: inherit;
+    height: 100%;
+    max-height: none;
   }
 
   .article[data-toc-layout="open"] .article-toc-backdrop {
@@ -860,19 +845,18 @@ img {
   }
 
   .article-sidebar {
-    top: calc(env(safe-area-inset-top, 0px) + 6rem);
+    top: calc(env(safe-area-inset-top, 0px) + 5rem);
     right: 0.75rem;
-    bottom: auto;
+    bottom: 0.75rem;
     left: 0.75rem;
     width: auto;
-    max-height: min(72vh, calc(100vh - 7rem));
-    max-height: min(72dvh, calc(100dvh - 7rem));
+    max-height: none;
     overflow: visible;
   }
 
   .article-toc {
-    height: auto;
-    max-height: inherit;
+    height: 100%;
+    max-height: none;
   }
 
   .archive-post {
