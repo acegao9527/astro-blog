@@ -123,6 +123,11 @@ cover: ./cover.webp
 
 ```text
 /
+├── docs/
+│   ├── 博客部署方案.md
+│   ├── 博客架构设计图.png
+│   ├── 路线图.md
+│   └── ...
 ├── public/
 │   ├── logo.png
 │   ├── favicon.ico
@@ -155,6 +160,15 @@ cover: ./cover.webp
 └── package.json
 ```
 
+## 项目文档
+
+项目资料、需求路线图和设计图统一放在 `docs/`：
+
+- [博客部署方案](docs/博客部署方案.md)
+- [路线图](docs/路线图.md)
+- [博客架构设计图](docs/博客架构设计图.png)
+- [旧服务端拉取部署说明](docs/旧服务端拉取部署说明.md)
+
 ## 部署
 
 常规部署链路：
@@ -165,4 +179,4 @@ blog-website-publish skill -> local build from /Users/acelee/workspace/blog -> d
 
 GitHub Actions 和 ta 服务器上的 Hermes cron job 已退出常规部署链路。发布网站文章时，由 blog 仓库的 `blog-website-publish` skill 将文章状态改为 `published`，使用 `BLOG_SOURCE=directory BLOG_DIR=/Users/acelee/workspace/blog` 在本机构建，再用 `DEPLOY_ENABLE_DIRECT=1 npm run deploy` 将 `dist/` 同步到 `/home/ubuntu/nginx-blog/html/`。
 
-旧服务端拉取部署运维说明见 `docs/旧服务端拉取部署说明.md`。
+旧服务端拉取部署运维说明见 [docs/旧服务端拉取部署说明.md](docs/旧服务端拉取部署说明.md)。
