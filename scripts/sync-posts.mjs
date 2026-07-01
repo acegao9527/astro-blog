@@ -441,6 +441,8 @@ function isIndexLikeMarkdownFile(name) {
   const lowerName = name.toLowerCase();
   return (
     lowerName === "agents.md" ||
+    lowerName === "claude.md" ||
+    lowerName === "gemini.md" ||
     lowerName === "index.auto.md" ||
     lowerName === "index.auto.mdx" ||
     lowerName === "index.md" ||
