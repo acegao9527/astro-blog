@@ -11,6 +11,7 @@
 - 增加 `sitemap`、`robots.txt` 和 RSS
 - 增加标签页、标签详情页、文章归档页
 - 增加文章页上一篇 / 下一篇导航
+- 增加 Giscus 评论模块，评论数据存放在公开 GitHub Discussions 仓库
 
 ## 内容来源
 
@@ -22,6 +23,9 @@
 - `BLOG_DIR`：可选，本地 Markdown 源目录的绝对路径；默认仅在未设置 `BLOG_REPO_URL` 时使用
 - `BLOG_SOURCE`：可选，设为 `directory` 时强制使用 `BLOG_DIR`，即使 `.env` 里同时存在 `BLOG_REPO_URL`
 - `SITE_URL`：线上站点绝对地址，用于 canonical、RSS、sitemap 和分享元信息
+- `PUBLIC_GISCUS_ENABLED`：可选，设为 `false` 时隐藏文章评论区
+- `PUBLIC_GISCUS_REPO` / `PUBLIC_GISCUS_REPO_ID`：可选，Giscus 使用的公开评论仓库
+- `PUBLIC_GISCUS_CATEGORY` / `PUBLIC_GISCUS_CATEGORY_ID`：可选，Giscus 使用的 Discussions 分类
 
 推荐先复制一份环境变量文件：
 

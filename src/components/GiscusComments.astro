@@ -1,0 +1,37 @@
+---
+const repo = import.meta.env.PUBLIC_GISCUS_REPO || "acegao9527/clawasync-comments";
+const repoId = import.meta.env.PUBLIC_GISCUS_REPO_ID || "R_kgDOTK6gRg";
+const category = import.meta.env.PUBLIC_GISCUS_CATEGORY || "Announcements";
+const categoryId =
+  import.meta.env.PUBLIC_GISCUS_CATEGORY_ID || "DIC_kwDOTK6gRs4DAUBM";
+const commentsEnabled = import.meta.env.PUBLIC_GISCUS_ENABLED !== "false";
+---
+
+{
+  commentsEnabled && (
+    <section class="comments-section" aria-labelledby="comments-title">
+      <div class="comments-section__header">
+        <h2 id="comments-title">评论</h2>
+        <p>由 GitHub Discussions 承载，需要 GitHub 账号登录。</p>
+      </div>
+      <script
+        is:inline
+        src="https://giscus.app/client.js"
+        data-repo={repo}
+        data-repo-id={repoId}
+        data-category={category}
+        data-category-id={categoryId}
+        data-mapping="pathname"
+        data-strict="1"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="top"
+        data-theme="light"
+        data-lang="zh-CN"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async
+      />
+    </section>
+  )
+}
