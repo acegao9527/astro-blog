@@ -1,36 +1,27 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { getCollection, render } from "astro:content";
+
+const [aboutPage] = await getCollection("about");
+if (!aboutPage) {
+  throw new Error("Missing about page content. Create blog/about/index.md.");
+}
+
+const { Content } = await render(aboutPage);
 ---
 
 <Layout
-  title="关于我"
-  description="关于 clawasync.com 和 Ace Lee 的简短介绍。"
+  title={aboutPage.data.title}
+  description={aboutPage.data.description}
 >
   <section class="container page-section">
-    <header class="page-header">
-      <div class="eyebrow">关于我</div>
-      <h1>关于这里</h1>
-      <p>
-        这里是 Ace Lee 的个人博客，记录产品判断、技术实践、AI 工作流和日常写作。
-      </p>
-    </header>
-
     <article class="article-shell">
+      <header class="article-header">
+        <div class="eyebrow">关于</div>
+        <h1>{aboutPage.data.title}</h1>
+      </header>
       <div class="article-content">
-        <p>
-          内容从本地 Markdown 出发，静态发布到网页。这个站点从 Hexo、Halo、Hashnode
-          到静态博客的迁移过程，单独整理在
-          <a href="/post/about-this-blog-history/">《关于本站的历史》</a>。
-          更即时的项目、代码和碎片动态，可以从下面两个入口找到。
-        </p>
-        <div class="hero__actions">
-          <a class="button" href="https://github.com/acegao9527" target="_blank" rel="me noopener noreferrer">
-            GitHub
-          </a>
-          <a class="button button--secondary" href="https://twitter.com/wuzhi1234" target="_blank" rel="me noopener noreferrer">
-            Twitter
-          </a>
-        </div>
+        <Content />
       </div>
     </article>
   </section>

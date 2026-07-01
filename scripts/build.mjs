@@ -8,7 +8,10 @@ import {
   requireContentSourceConfig,
 } from "./config.mjs";
 
-const CACHE_DIR = path.join(ROOT_DIR, ".cache", "content", "posts");
+const CACHE_DIRS = [
+  path.join(ROOT_DIR, ".cache", "content", "posts"),
+  path.join(ROOT_DIR, ".cache", "content", "about"),
+];
 
 function run(command, args) {
   const result = spawnSync(command, args, {
@@ -37,7 +40,9 @@ let exitCode = 0;
 try {
   exitCode = run("npm", ["run", "astro", "--", "build"]);
 } finally {
-  fs.rmSync(CACHE_DIR, { recursive: true, force: true });
+  for (const cacheDir of CACHE_DIRS) {
+    fs.rmSync(cacheDir, { recursive: true, force: true });
+  }
 }
 
 process.exit(exitCode);

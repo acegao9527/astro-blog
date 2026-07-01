@@ -14,8 +14,10 @@ const contentSource = requireContentSourceConfig(
   "content sync",
 );
 const OUTPUT_DIR = path.join(ROOT_DIR, ".cache", "content", "posts");
+const OUTPUT_ABOUT_DIR = path.join(ROOT_DIR, ".cache", "content", "about");
 const OUTPUT_ASSET_DIR = path.join(ROOT_DIR, "public", "uploads", "posts");
 const FRONTMATTER_ASSET_FIELDS = ["cover", "hero", "image", "ogImage"];
+const RESERVED_NON_POST_DIRECTORIES = new Set(["about"]);
 const FILE_MODE = 0o644;
 const DIRECTORY_MODE = 0o755;
 const IMAGE_MAX_WIDTH = 1600;
@@ -507,6 +509,12 @@ function listPostEntries(rootDir) {
     for (const entry of entries) {
       if (entry.name.startsWith(".")) continue;
       if (!entry.isDirectory()) continue;
+      if (
+        currentDir === rootDir &&
+        RESERVED_NON_POST_DIRECTORIES.has(entry.name)
+      ) {
+        continue;
+      }
 
       const postDir = path.join(currentDir, entry.name);
       const entryFilename = findPostEntryFilename(postDir, entry.name);
@@ -541,6 +549,31 @@ function listPostEntries(rootDir) {
 
   visitDirectory(rootDir);
   return posts.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "zh-CN"));
+}
+
+function syncAboutPage(rootDir) {
+  const sourcePath = path.join(rootDir, "about", "index.md");
+  if (!fs.existsSync(sourcePath)) {
+    return 0;
+  }
+
+  const raw = fs.readFileSync(sourcePath, "utf-8");
+  const { data, content } = matter(raw);
+  const fallbackModified = new Date().toISOString();
+  const normalized = omitUndefinedEntries({
+    ...data,
+    title: String(data.title || "关于我").trim(),
+    description: String(data.description || makeExcerpt(content)).trim(),
+    type: String(data.type || "page").trim(),
+    status: String(data.status || "published").trim(),
+    modified: normalizeDateValue(data.modified, fallbackModified),
+  });
+  const output = `${frontmatterToString(normalized)}${normalizeCodeFenceLanguages(content.trim())}\n`;
+  const outputPath = path.join(OUTPUT_ABOUT_DIR, "index.md");
+
+  fs.writeFileSync(outputPath, output, "utf-8");
+  ensureFileMode(outputPath);
+  return 1;
 }
 
 function formatByteSize(bytes) {
@@ -622,10 +655,13 @@ if (!fs.existsSync(BLOG_DIR)) {
 }
 
 ensureDirectory(OUTPUT_DIR);
+ensureDirectory(OUTPUT_ABOUT_DIR);
 ensureDirectory(OUTPUT_ASSET_DIR);
 resetOutputDir(OUTPUT_DIR);
+resetOutputDir(OUTPUT_ABOUT_DIR);
 resetOutputDir(OUTPUT_ASSET_DIR);
 
+const aboutCount = syncAboutPage(BLOG_DIR);
 const posts = listPostEntries(BLOG_DIR);
 const seenSlugs = new Set();
 
@@ -707,7 +743,7 @@ for (const post of posts) {
 }
 
 console.log(
-  `[sync-posts] Synced ${count} post(s) and ${assetCount} asset(s) from ${BLOG_DIR}`,
+  `[sync-posts] Synced ${count} post(s), ${aboutCount} about page(s), and ${assetCount} asset(s) from ${BLOG_DIR}`,
 );
 
 if (imageOptimizationStats.optimized > 0) {
