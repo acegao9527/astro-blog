@@ -24,6 +24,12 @@ const IMAGE_MAX_WIDTH = 1600;
 const IMAGE_WEBP_QUALITY = 82;
 const IMAGE_OUTPUT_EXTENSION = ".webp";
 const OPTIMIZABLE_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png"]);
+const EXCLUDED_POST_SOURCE_DIRECTORIES = new Set([
+  "about",
+  "assets",
+  "draft",
+  "workbench",
+]);
 const imageOptimizationStats = {
   optimized: 0,
   originalBytes: 0,
@@ -517,8 +523,12 @@ function listPostEntries(rootDir) {
       }
 
       const postDir = path.join(currentDir, entry.name);
-      const entryFilename = findPostEntryFilename(postDir, entry.name);
       const relativeDir = path.relative(rootDir, postDir);
+      const [topLevelDir] = relativeDir.split(path.sep);
+
+      if (EXCLUDED_POST_SOURCE_DIRECTORIES.has(topLevelDir)) continue;
+
+      const entryFilename = findPostEntryFilename(postDir, entry.name);
       const fallbackSlug = relativeDir.split(path.sep).pop() || entry.name;
 
       if (entryFilename) {
