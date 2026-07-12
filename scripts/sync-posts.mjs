@@ -674,9 +674,9 @@ let assetCount = 0;
 for (const post of posts) {
   const raw = fs.readFileSync(post.entryPath, "utf-8");
   const { data, content } = matter(raw);
-  const status = String(data.status ?? "").trim().toLowerCase();
+  const status = String(data.status ?? "published").trim().toLowerCase();
 
-  if (status !== "published") {
+  if (!["published", "archived"].includes(status)) {
     continue;
   }
 
