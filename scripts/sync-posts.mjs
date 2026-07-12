@@ -17,7 +17,6 @@ const OUTPUT_DIR = path.join(ROOT_DIR, ".cache", "content", "posts");
 const OUTPUT_ABOUT_DIR = path.join(ROOT_DIR, ".cache", "content", "about");
 const OUTPUT_ASSET_DIR = path.join(ROOT_DIR, "public", "uploads", "posts");
 const FRONTMATTER_ASSET_FIELDS = ["cover", "hero", "image", "ogImage"];
-const RESERVED_NON_POST_DIRECTORIES = new Set(["about"]);
 const FILE_MODE = 0o644;
 const DIRECTORY_MODE = 0o755;
 const IMAGE_MAX_WIDTH = 1600;
@@ -27,6 +26,7 @@ const OPTIMIZABLE_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png"]);
 const EXCLUDED_POST_SOURCE_DIRECTORIES = new Set([
   "about",
   "assets",
+  "auto-draft",
   "draft",
   "workbench",
 ]);
@@ -515,13 +515,6 @@ function listPostEntries(rootDir) {
     for (const entry of entries) {
       if (entry.name.startsWith(".")) continue;
       if (!entry.isDirectory()) continue;
-      if (
-        currentDir === rootDir &&
-        RESERVED_NON_POST_DIRECTORIES.has(entry.name)
-      ) {
-        continue;
-      }
-
       const postDir = path.join(currentDir, entry.name);
       const relativeDir = path.relative(rootDir, postDir);
       const [topLevelDir] = relativeDir.split(path.sep);
