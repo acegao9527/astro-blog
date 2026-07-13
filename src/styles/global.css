@@ -455,8 +455,9 @@ img {
 }
 
 .article-toc__title {
-  display: grid;
-  gap: 0.15rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
 }
 
 .article-toc__count {
@@ -526,7 +527,8 @@ img {
 }
 
 @media (min-width: 1100px) {
-  .article.container {
+  .article.container,
+  .site-header__inner--article {
     width: min(calc(100% - 2rem), 1320px);
   }
 

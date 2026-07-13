@@ -59,7 +59,7 @@ const tocPanelId = `article-toc-${post.data.slug}`;
               data-toc-toggle
               aria-controls={tocPanelId}
               aria-expanded="false"
-              aria-label="打开文章大纲"
+              aria-label="打开文章导航"
             >
               <svg class="icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M12 2v8"/>
@@ -68,7 +68,7 @@ const tocPanelId = `article-toc-${post.data.slug}`;
                 <path d="M6 14h2"/>
                 <path d="M16 14h2"/>
               </svg>
-              <span data-toc-toggle-text>大纲</span>
+              <span data-toc-toggle-text>导航</span>
             </button>
           )}
           {post.data.tags.length > 0 && (
@@ -90,20 +90,20 @@ const tocPanelId = `article-toc-${post.data.slug}`;
         <aside
           class="article-sidebar"
           id={tocPanelId}
-          aria-label="文章大纲"
+          aria-label="文章导航"
           aria-hidden="true"
         >
           <div class="article-toc">
             <div class="article-toc__header">
               <div class="article-toc__title">
-                <span>太长不读</span>
+                <span>导航</span>
                 <span class="article-toc__count">{tocHeadings.length} 节</span>
               </div>
               <button
                 class="article-toc__close"
                 type="button"
                 data-toc-close
-                aria-label="关闭文章大纲"
+                aria-label="关闭文章导航"
               >
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -126,7 +126,7 @@ const tocPanelId = `article-toc-${post.data.slug}`;
         class="article-toc-backdrop"
         type="button"
         data-toc-close
-        aria-label="关闭文章大纲"
+        aria-label="关闭文章导航"
       ></button>
     )}
 
@@ -175,13 +175,13 @@ const tocPanelId = `article-toc-${post.data.slug}`;
     );
     toggleButton.setAttribute(
       "aria-label",
-      isOpen || isPinned ? "关闭文章大纲" : "打开文章大纲",
+      isOpen || isPinned ? "关闭文章导航" : "打开文章导航",
     );
     if (tocPanel) {
       tocPanel.setAttribute("aria-hidden", isOpen || isPinned ? "false" : "true");
     }
     if (toggleText) {
-      toggleText.textContent = isOpen ? "收起" : "大纲";
+      toggleText.textContent = isOpen ? "收起" : "导航";
     }
     document.documentElement.classList.toggle(
       "toc-drawer-open",

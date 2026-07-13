@@ -90,7 +90,13 @@ const jsonLd =
   <body>
     <div class="site-shell">
       <header class="site-header">
-        <div class="container site-header__inner">
+        <div
+          class:list={[
+            "container",
+            "site-header__inner",
+            { "site-header__inner--article": pageType === "article" },
+          ]}
+        >
           <a class="site-brand" href="/" aria-label="clawasync.com">
             <img class="site-brand__mark" src="/logo.png" alt="" width="32" height="31" />
             <span>clawasync.com</span>
