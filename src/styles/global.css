@@ -25,6 +25,7 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -528,7 +529,7 @@ img {
 
 @media (min-width: 1100px) {
   .article.container,
-  .site-header__inner--article {
+  .site-header__inner {
     width: min(calc(100% - 2rem), 1320px);
   }
 
