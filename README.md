@@ -67,22 +67,21 @@ BLOG_SOURCE=repo BLOG_REPO_URL="git@github.com:acegao9527/blog.git" npm run dev
 
 ```text
 BLOG_REPO_URL 或 BLOG_DIR 指向的根目录/
-  hermes-vs-openclaw/
-    index.md
-    cover.webp
-    compare-chart.png
-  openclaw-bu-shu-bi-kang-zhi-nan/
-    index.md
-    cover.webp
-    install-step-1.png
+  2026/
+    Hermes-vs-OpenClaw深度技术解析.md
+  assets/
+    Hermes-vs-OpenClaw深度技术解析/
+      cover.webp
+  research/
+  draft/
 ```
 
 约定：
 
-- 每篇文章一个目录，目录名建议直接等于 `slug`
-- 正文文件固定为 `index.md`
-- 图片、PDF 等素材和文章放在同目录或其子目录
-- Markdown 中使用相对路径，例如 `![](./cover.webp)` 或 `[附件](./files/guide.pdf)`
+- 同步器只扫描四位年份目录；研究、选题和草稿目录不会进入网站构建
+- 正式文章直接放在年份目录下，使用稳定的 `slug`
+- 图片、PDF 等素材放在根目录 `assets/<文章文件名>/`
+- Markdown 中使用相对路径，例如 `![](../assets/文章文件名/cover.webp)`
 - 同步后素材会被复制到 `public/uploads/posts/<slug>/`
 
 ## Frontmatter

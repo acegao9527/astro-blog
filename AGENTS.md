@@ -9,6 +9,7 @@
 ## 项目规则
 
 - 每次代码或内容变更后，都必须运行 `npm run build`。
+- 内容同步采用发布白名单：只扫描 Blog 内容仓库的四位年份目录，并继续兼容其中 `published`、`archived` 状态的正式文章；`research/`、`topics/`、`draft/`、`auto-draft/` 和 `workbench/` 均不得进入网站构建。
 - 常规网站发布由 blog 仓库的 `blog-website-publish` skill 触发：本机 blog 内容源构建成功后，显式运行 `npm run deploy` 同步到服务器。
 - 构建成功后，除非用户明确要求不要这样做，否则必须立即提交并推送本次相关仓库变更。
 - 以已部署的博客网址作为主要验收界面。目标是每次改动完成后，都能通过 direct deploy 在在线站点看到最新结果。

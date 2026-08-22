@@ -23,13 +23,7 @@ const IMAGE_MAX_WIDTH = 1600;
 const IMAGE_WEBP_QUALITY = 82;
 const IMAGE_OUTPUT_EXTENSION = ".webp";
 const OPTIMIZABLE_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png"]);
-const EXCLUDED_POST_SOURCE_DIRECTORIES = new Set([
-  "about",
-  "assets",
-  "auto-draft",
-  "draft",
-  "workbench",
-]);
+const PUBLISHED_YEAR_DIRECTORY_PATTERN = /^\d{4}$/;
 const imageOptimizationStats = {
   optimized: 0,
   originalBytes: 0,
@@ -517,9 +511,6 @@ function listPostEntries(rootDir) {
       if (!entry.isDirectory()) continue;
       const postDir = path.join(currentDir, entry.name);
       const relativeDir = path.relative(rootDir, postDir);
-      const [topLevelDir] = relativeDir.split(path.sep);
-
-      if (EXCLUDED_POST_SOURCE_DIRECTORIES.has(topLevelDir)) continue;
 
       const entryFilename = findPostEntryFilename(postDir, entry.name);
       const fallbackSlug = relativeDir.split(path.sep).pop() || entry.name;
@@ -550,7 +541,15 @@ function listPostEntries(rootDir) {
     }
   }
 
-  visitDirectory(rootDir);
+  for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
+    if (
+      entry.isDirectory() &&
+      PUBLISHED_YEAR_DIRECTORY_PATTERN.test(entry.name)
+    ) {
+      visitDirectory(path.join(rootDir, entry.name));
+    }
+  }
+
   return posts.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "zh-CN"));
 }
 
