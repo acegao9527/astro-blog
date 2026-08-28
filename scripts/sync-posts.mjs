@@ -23,13 +23,7 @@ const IMAGE_MAX_WIDTH = 1600;
 const IMAGE_WEBP_QUALITY = 82;
 const IMAGE_OUTPUT_EXTENSION = ".webp";
 const OPTIMIZABLE_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png"]);
-const EXCLUDED_POST_SOURCE_DIRECTORIES = new Set([
-  "about",
-  "assets",
-  "auto-draft",
-  "draft",
-  "workbench",
-]);
+const YEAR_DIRECTORY_PATTERN = /^\d{4}$/;
 const imageOptimizationStats = {
   optimized: 0,
   originalBytes: 0,
@@ -517,9 +511,6 @@ function listPostEntries(rootDir) {
       if (!entry.isDirectory()) continue;
       const postDir = path.join(currentDir, entry.name);
       const relativeDir = path.relative(rootDir, postDir);
-      const [topLevelDir] = relativeDir.split(path.sep);
-
-      if (EXCLUDED_POST_SOURCE_DIRECTORIES.has(topLevelDir)) continue;
 
       const entryFilename = findPostEntryFilename(postDir, entry.name);
       const fallbackSlug = relativeDir.split(path.sep).pop() || entry.name;
@@ -550,7 +541,19 @@ function listPostEntries(rootDir) {
     }
   }
 
-  visitDirectory(rootDir);
+  const yearDirectories = fs
+    .readdirSync(rootDir, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isDirectory() && YEAR_DIRECTORY_PATTERN.test(entry.name),
+    )
+    .map((entry) => path.join(rootDir, entry.name))
+    .sort((a, b) => a.localeCompare(b, "zh-CN"));
+
+  for (const yearDirectory of yearDirectories) {
+    visitDirectory(yearDirectory);
+  }
+
   return posts.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "zh-CN"));
 }
 
@@ -567,7 +570,7 @@ function syncAboutPage(rootDir) {
     ...data,
     title: String(data.title || "关于我").trim(),
     description: String(data.description || makeExcerpt(content)).trim(),
-    type: String(data.type || "page").trim(),
+    type: "page",
     status: String(data.status || "published").trim(),
     modified: normalizeDateValue(data.modified, fallbackModified),
   });

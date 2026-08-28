@@ -67,18 +67,23 @@ BLOG_SOURCE=repo BLOG_REPO_URL="git@github.com:acegao9527/blog.git" npm run dev
 
 ```text
 BLOG_REPO_URL 或 BLOG_DIR 指向的根目录/
-  hermes-vs-openclaw/
+  2026/
+    hermes-vs-openclaw/
+      index.md
+      cover.webp
+      compare-chart.png
+    openclaw-bu-shu-bi-kang-zhi-nan/
+      index.md
+      cover.webp
+      install-step-1.png
+  about/
     index.md
-    cover.webp
-    compare-chart.png
-  openclaw-bu-shu-bi-kang-zhi-nan/
-    index.md
-    cover.webp
-    install-step-1.png
 ```
 
 约定：
 
+- 只同步四位年份目录（如 `2026/`）下的 Markdown 文章，以及 `about/index.md`
+- 根目录 Markdown 和 `research/`、`draft/` 等非年份目录不会参与构建
 - 每篇文章一个目录，目录名建议直接等于 `slug`
 - 正文文件固定为 `index.md`
 - 图片、PDF 等素材和文章放在同目录或其子目录
