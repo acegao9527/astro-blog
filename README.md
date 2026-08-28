@@ -74,11 +74,14 @@ BLOG_REPO_URL 或 BLOG_DIR 指向的根目录/
       cover.webp
   research/
   draft/
+  about/
+    index.md
 ```
 
 约定：
 
-- 同步器只扫描四位年份目录；研究、选题和草稿目录不会进入网站构建
+- 文章只从四位年份目录同步，关于页只读取 `about/index.md`
+- 研究、选题和草稿目录不会进入网站构建
 - 正式文章直接放在年份目录下，使用稳定的 `slug`
 - 图片、PDF 等素材放在根目录 `assets/<文章文件名>/`
 - Markdown 中使用相对路径，例如 `![](../assets/文章文件名/cover.webp)`

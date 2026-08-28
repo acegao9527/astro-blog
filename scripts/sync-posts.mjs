@@ -566,7 +566,7 @@ function syncAboutPage(rootDir) {
     ...data,
     title: String(data.title || "关于我").trim(),
     description: String(data.description || makeExcerpt(content)).trim(),
-    type: String(data.type || "page").trim(),
+    type: "page",
     status: String(data.status || "published").trim(),
     modified: normalizeDateValue(data.modified, fallbackModified),
   });
