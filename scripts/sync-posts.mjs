@@ -487,6 +487,8 @@ function findPostEntryFilename(postDir, entryName) {
 }
 
 function listPostEntries(rootDir) {
+  const publishedRoot = path.join(rootDir, "已发布");
+  if (!fs.existsSync(publishedRoot)) throw new Error("[sync-posts] Expected BLOG_DIR to point to Oasis/Blog with 已发布/; refusing to scan the vault root or retired layout");
   const posts = [];
   const seenEntries = new Set();
 
@@ -541,12 +543,12 @@ function listPostEntries(rootDir) {
     }
   }
 
-  for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
+  for (const entry of fs.readdirSync(publishedRoot, { withFileTypes: true })) {
     if (
       entry.isDirectory() &&
       PUBLISHED_YEAR_DIRECTORY_PATTERN.test(entry.name)
     ) {
-      visitDirectory(path.join(rootDir, entry.name));
+      visitDirectory(path.join(publishedRoot, entry.name));
     }
   }
 
@@ -554,7 +556,7 @@ function listPostEntries(rootDir) {
 }
 
 function syncAboutPage(rootDir) {
-  const sourcePath = path.join(rootDir, "about", "index.md");
+  const sourcePath = path.join(rootDir, "独立页面", "index.md");
   if (!fs.existsSync(sourcePath)) {
     return 0;
   }
@@ -566,7 +568,7 @@ function syncAboutPage(rootDir) {
     ...data,
     title: String(data.title || "关于我").trim(),
     description: String(data.description || makeExcerpt(content)).trim(),
-    type: String(data.type || "page").trim(),
+    type: String(data.type || "独立页面").trim(),
     status: String(data.status || "published").trim(),
     modified: normalizeDateValue(data.modified, fallbackModified),
   });
@@ -611,6 +613,12 @@ async function copyReferencedAssets(sourceDir, slug, relativeAssetPaths) {
   for (const relativePath of relativeAssetPaths) {
     const { pathname } = splitAssetPath(relativePath);
     const absolutePath = path.resolve(sourceDir, pathname);
+    const assetRoot = fs.realpathSync(path.join(BLOG_DIR, "assets"));
+    const realPath = fs.existsSync(absolutePath) ? fs.realpathSync(absolutePath) : absolutePath;
+    const assetRelative = path.relative(assetRoot, realPath);
+    if (assetRelative.startsWith("..") || path.isAbsolute(assetRelative)) {
+      throw new Error(`[sync-posts] Public asset must stay inside Blog/assets: ${relativePath}`);
+    }
     const sourceStats = fs.existsSync(absolutePath)
       ? fs.statSync(absolutePath)
       : undefined;
@@ -673,7 +681,8 @@ let assetCount = 0;
 for (const post of posts) {
   const raw = fs.readFileSync(post.entryPath, "utf-8");
   const { data, content } = matter(raw);
-  const status = String(data.status ?? "published").trim().toLowerCase();
+  const status = String(data.status ?? "").trim().toLowerCase();
+  if (data.type !== "博客文章") throw new Error(`[sync-posts] Expected type 博客文章: ${post.entryPath}`);
 
   if (!["published", "archived"].includes(status)) {
     continue;
@@ -702,6 +711,7 @@ for (const post of posts) {
   const tags = normalizeTags(data.tags);
 
   const extras = { ...data };
+  for (const key of ["_organized", "source", "desired_state"]) delete extras[key];
   delete extras.id;
   delete extras.title;
   delete extras.slug;

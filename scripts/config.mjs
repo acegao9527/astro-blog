@@ -97,7 +97,7 @@ function getDirectorySource(config) {
 
   return {
     kind: "directory",
-    blogDir: config.blogDir,
+    blogDir: path.resolve(ROOT_DIR, config.blogDir),
   };
 }
 

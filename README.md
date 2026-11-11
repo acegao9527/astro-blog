@@ -15,74 +15,34 @@
 
 ## 内容来源
 
-项目不再内置任何机器相关的默认路径。运行前需要显式提供内容源和站点地址：
+内容唯一可编辑源为无 Git 的 Oasis。Astro 代码项目仍独立使用 Git；构建只读取 `Blog/已发布/` 中的四位年份目录和 `Blog/独立页面/index.md`，保留 published、archived 两种正式文章状态。草稿、研究和来源快照不进入构建。
 
-- `BLOG_REPO_URL`：Markdown 源仓库地址，设置后优先使用
-- `BLOG_REPO_REF`：可选，指定分支或 tag；不设置时使用仓库默认分支
-- `BLOG_REPO_SHA`：可选，指定需要构建的精确 commit；ta 服务器部署脚本会用它锁定 blog 源码版本
-- `BLOG_DIR`：可选，本地 Markdown 源目录的绝对路径；默认仅在未设置 `BLOG_REPO_URL` 时使用
-- `BLOG_SOURCE`：可选，设为 `directory` 时强制使用 `BLOG_DIR`，即使 `.env` 里同时存在 `BLOG_REPO_URL`
-- `SITE_URL`：线上站点绝对地址，用于 canonical、RSS、sitemap 和分享元信息
-- `PUBLIC_GISCUS_ENABLED`：可选，设为 `false` 时隐藏文章评论区
-- `PUBLIC_GISCUS_REPO` / `PUBLIC_GISCUS_REPO_ID`：可选，Giscus 使用的公开评论仓库
-- `PUBLIC_GISCUS_CATEGORY` / `PUBLIC_GISCUS_CATEGORY_ID`：可选，Giscus 使用的 Discussions 分类
+复制 `.env.example` 为 `.env` 后设置：
 
-推荐先复制一份环境变量文件：
-
-```bash
-cp .env.example .env
+```dotenv
+BLOG_SOURCE=directory
+BLOG_DIR=../oasis/Blog
+SITE_URL=https://clawasync.com
 ```
 
-然后在 `.env` 中填写真实值：
-
-```bash
-BLOG_REPO_URL="git@github.com:acegao9527/blog.git"
-SITE_URL="https://your-blog.com"
-```
-
-本机发布前构建应显式使用本地 blog 内容源：
-
-```bash
-BLOG_SOURCE=directory BLOG_DIR=/Users/acelee/workspace/blog SITE_URL="https://clawasync.com" npm run build
-```
-
-也可以在命令前临时覆盖远端仓库源：
-
-```bash
-BLOG_SOURCE=repo BLOG_REPO_URL="git@github.com:acegao9527/blog.git" npm run dev
-```
-
-说明：
-
-- `npm run sync:posts` 和 `npm run build` 都会校验必需配置
-- 缺少内容源或 `SITE_URL` 时会直接失败，不再回退到隐式默认值
-- 使用 `BLOG_REPO_URL` 时，仓库会缓存到 `.cache/source/blog`
-- 使用 `BLOG_SOURCE=directory` 时，会忽略 `.env` 中已有的 `BLOG_REPO_URL`
-- shell 环境变量优先级高于 `.env`
-- 已停用的 ta pull-deploy 变量保留在 `.env.example` 的 `ASTRO_BLOG_*` 部分，仅用于手动救援旧链路
-
-## 数据源结构
-
-推荐的源目录结构：
+BLOG_DIR 相对于 Astro 项目根解析，也可以使用绝对路径。shell 环境变量优先于 `.env`。`npm run build` 执行内容同步与 Astro 构建；不读取 Oasis Git、不拉取旧 blog 仓库，也不部署。
 
 ```text
-BLOG_REPO_URL 或 BLOG_DIR 指向的根目录/
-  2026/
-    Hermes-vs-OpenClaw深度技术解析.md
-  assets/
-    Hermes-vs-OpenClaw深度技术解析/
-      cover.webp
-  research/
-  draft/
+Oasis/Blog/
+  已发布/2026/文章.md
+  草稿/文章.md
+  自动草稿/文章.md
+  独立页面/index.md
+  assets/博客迁入/文章名/配图.png
+  assets/发布产物/渠道/
+  来源归档/
 ```
 
-约定：
+文章图片使用文档相对路径，例如 `../../assets/博客迁入/文章名/配图.png`。构建只允许复制 Blog/assets 内的实际文件，拒绝通过相对路径或符号链接读出其他私人领域附件。稳定 slug 控制公开 URL，目录改变不改变 URL。
 
-- 同步器只扫描四位年份目录；研究、选题和草稿目录不会进入网站构建
-- 正式文章直接放在年份目录下，使用稳定的 `slug`
-- 图片、PDF 等素材放在根目录 `assets/<文章文件名>/`
-- Markdown 中使用相对路径，例如 `![](../assets/文章文件名/cover.webp)`
-- 同步后素材会被复制到 `public/uploads/posts/<slug>/`
+发布网站与各渠道工具在 Oasis 根 `.agents/skills/`，从 Oasis 根运行。只有明确授权发布时，才运行发布技能和 direct deploy。旧仓库 pull-deploy 仅为退役恢复材料，不是当前发布入口。
+
+执行 `npm test` 验证内容选择边界、私有附件隔离和实际新目录构建，再执行 `npm run build`。
 
 ## Frontmatter
 

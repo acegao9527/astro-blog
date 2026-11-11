@@ -21,7 +21,7 @@ const about = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string().min(1),
-    type: z.literal("page"),
+    type: z.literal("独立页面"),
     status: z.string().default("published"),
     modified: z.coerce.date().optional(),
   }),
