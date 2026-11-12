@@ -15,7 +15,7 @@
 
 ## 内容来源
 
-内容唯一可编辑源为无 Git 的 Oasis。Astro 代码项目仍独立使用 Git；构建只读取 `Blog/已发布/` 中的四位年份目录和 `Blog/独立页面/index.md`，保留 published、archived 两种正式文章状态。草稿、研究和来源快照不进入构建。
+内容唯一可编辑源为无 Git 的 Oasis。Astro 代码项目仍独立使用 Git；构建只读取 `Blog/` 中的四位年份目录和 `Blog/index.md`，保留 published、archived 两种正式文章状态。草稿、研究和来源快照不进入构建。
 
 复制 `.env.example` 为 `.env` 后设置：
 
@@ -29,16 +29,14 @@ BLOG_DIR 相对于 Astro 项目根解析，也可以使用绝对路径。shell �
 
 ```text
 Oasis/Blog/
-  已发布/2026/文章.md
+  2026/文章.md
   草稿/文章.md
-  自动草稿/文章.md
-  独立页面/index.md
+  index.md
   assets/博客迁入/文章名/配图.png
   assets/发布产物/渠道/
-  来源归档/
 ```
 
-文章图片使用文档相对路径，例如 `../../assets/博客迁入/文章名/配图.png`。构建只允许复制 Blog/assets 内的实际文件，拒绝通过相对路径或符号链接读出其他私人领域附件。稳定 slug 控制公开 URL，目录改变不改变 URL。
+文章图片使用文档相对路径，例如 `../assets/博客迁入/文章名/配图.png`。构建只允许复制 Blog/assets 内的实际文件，拒绝通过相对路径或符号链接读出其他私人领域附件。稳定 slug 控制公开 URL，目录改变不改变 URL。
 
 发布网站与各渠道工具在 Oasis 根 `.agents/skills/`，从 Oasis 根运行。只有明确授权发布时，才运行发布技能和 direct deploy。旧仓库 pull-deploy 仅为退役恢复材料，不是当前发布入口。
 

@@ -435,10 +435,6 @@ function normalizeCodeFenceLanguages(content) {
   return content.replace(/^```other(\s*)$/gm, "```bash$1");
 }
 
-function isMarkdownFile(name) {
-  return name.endsWith(".md") || name.endsWith(".mdx");
-}
-
 function isIndexLikeMarkdownFile(name) {
   const lowerName = name.toLowerCase();
   return (
@@ -452,111 +448,29 @@ function isIndexLikeMarkdownFile(name) {
   );
 }
 
-function findPostEntryFilename(postDir, entryName) {
-  const candidateNames = ["post.md", "index.md", "post.mdx", "index.mdx"];
-  const explicitEntry = candidateNames.find((name) =>
-    fs.existsSync(path.join(postDir, name)),
-  );
-
-  if (explicitEntry) {
-    return explicitEntry;
-  }
-
-  const markdownFiles = fs
-    .readdirSync(postDir, { withFileTypes: true })
-    .filter(
-      (child) =>
-        child.isFile() &&
-        !child.name.startsWith(".") &&
-        isMarkdownFile(child.name) &&
-        !isIndexLikeMarkdownFile(child.name),
-    )
-    .map((child) => child.name)
-    .sort((a, b) => a.localeCompare(b, "zh-CN"));
-
-  if (markdownFiles.length === 0) {
-    return null;
-  }
-
-  const sameNameFile = markdownFiles.find((filename) => {
-    const basename = path.basename(filename, path.extname(filename));
-    return basename === entryName;
-  });
-
-  return sameNameFile || markdownFiles[0];
-}
-
 function listPostEntries(rootDir) {
-  const publishedRoot = path.join(rootDir, "已发布");
-  if (!fs.existsSync(publishedRoot)) throw new Error("[sync-posts] Expected BLOG_DIR to point to Oasis/Blog with 已发布/; refusing to scan the vault root or retired layout");
+  if (path.basename(rootDir) !== "Blog" || !fs.statSync(rootDir).isDirectory()) {
+    throw new Error("[sync-posts] Expected BLOG_DIR to point to Oasis/Blog; refusing to scan the vault root or retired layout");
+  }
   const posts = [];
-  const seenEntries = new Set();
-
-  function addPostEntry(entryPath, sourceDir, fallbackSlug, sortKey) {
-    const normalizedEntryPath = path.normalize(entryPath);
-    if (seenEntries.has(normalizedEntryPath)) return;
-    seenEntries.add(normalizedEntryPath);
-
-    posts.push({
-      entryPath: normalizedEntryPath,
-      sourceDir,
-      fallbackSlug,
-      sortKey,
-    });
-  }
-
-  function visitDirectory(currentDir) {
-    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
-
-    for (const entry of entries) {
-      if (entry.name.startsWith(".")) continue;
-      if (!entry.isDirectory()) continue;
-      const postDir = path.join(currentDir, entry.name);
-      const relativeDir = path.relative(rootDir, postDir);
-
-      const entryFilename = findPostEntryFilename(postDir, entry.name);
-      const fallbackSlug = relativeDir.split(path.sep).pop() || entry.name;
-
-      if (entryFilename) {
-        addPostEntry(
-          path.join(postDir, entryFilename),
-          postDir,
-          fallbackSlug,
-          relativeDir,
-        );
+  for (const year of fs.readdirSync(rootDir, { withFileTypes: true })) {
+    if (!year.isDirectory() || !PUBLISHED_YEAR_DIRECTORY_PATTERN.test(year.name)) continue;
+    const yearDir = path.join(rootDir, year.name);
+    for (const entry of fs.readdirSync(yearDir, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.endsWith(".md") || entry.name.startsWith(".") || isIndexLikeMarkdownFile(entry.name)) continue;
+      const entryPath = path.join(yearDir, entry.name);
+      const { data } = matter(fs.readFileSync(entryPath, "utf8"));
+      if (data.review_status && data.review_status !== "reviewed") {
+        throw new Error(`[sync-posts] Article awaits user review: ${entryPath}`);
       }
-
-      visitDirectory(postDir);
-    }
-
-    for (const entry of entries) {
-      if (entry.name.startsWith(".")) continue;
-      if (!entry.isFile()) continue;
-      if (!isMarkdownFile(entry.name)) continue;
-      if (isIndexLikeMarkdownFile(entry.name)) continue;
-
-      const filePath = path.join(currentDir, entry.name);
-      const basename = path.basename(entry.name, path.extname(entry.name));
-      const relativeFile = path.relative(rootDir, filePath);
-
-      addPostEntry(filePath, currentDir, basename, relativeFile);
+      posts.push({ entryPath, sourceDir: yearDir, fallbackSlug: path.basename(entry.name, ".md"), sortKey: path.relative(rootDir, entryPath) });
     }
   }
-
-  for (const entry of fs.readdirSync(publishedRoot, { withFileTypes: true })) {
-    if (
-      entry.isDirectory() &&
-      PUBLISHED_YEAR_DIRECTORY_PATTERN.test(entry.name)
-    ) {
-      visitDirectory(path.join(publishedRoot, entry.name));
-    }
-  }
-
   return posts.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "zh-CN"));
 }
 
 function syncAboutPage(rootDir) {
-  const sourcePath = path.join(rootDir, "独立页面", "index.md");
+  const sourcePath = path.join(rootDir, "index.md");
   if (!fs.existsSync(sourcePath)) {
     return 0;
   }
